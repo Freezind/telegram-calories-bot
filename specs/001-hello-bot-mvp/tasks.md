@@ -25,11 +25,11 @@ Single project structure per plan.md:
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create directory structure (cmd/bot, internal/handlers, internal/services, tests/unit)
-- [ ] T002 Initialize Go module with `go mod init github.com/freezind/telegram-calories-bot`
-- [ ] T003 Add Telebot dependency with `go get github.com/tucnak/telebot/v3`
-- [ ] T004 Create .env.example file documenting TELEGRAM_BOT_TOKEN requirement
-- [ ] T005 Create .gitignore with .env entry to prevent committing secrets
+- [x] T001 Create directory structure (cmd/bot, internal/handlers, internal/services, tests/unit)
+- [x] T002 Initialize Go module with `go mod init github.com/freezind/telegram-calories-bot`
+- [x] T003 Add Telebot dependency with `go get github.com/tucnak/telebot/v3`
+- [x] T004 Create .env.example file documenting TELEGRAM_BOT_TOKEN requirement
+- [x] T005 Create .gitignore with .env entry to prevent committing secrets
 
 ---
 
@@ -39,9 +39,9 @@ Single project structure per plan.md:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 Write failing test in tests/unit/greeter_test.go (test-first: verify "Hello! 👋" output)
-- [ ] T007 Create Greet() service function in internal/services/greeter.go (returns "Hello! 👋")
-- [ ] T008 Run test and verify it passes
+- [x] T006 Write failing test in tests/unit/greeter_test.go (test-first: verify "Hello! 👋" output)
+- [x] T007 Create Greet() service function in internal/services/greeter.go (returns "Hello! 👋")
+- [x] T008 Run test and verify it passes
 
 **Checkpoint**: Foundation ready - greeter service tested and working. User story handlers can now be implemented in parallel.
 
@@ -55,10 +55,10 @@ Single project structure per plan.md:
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Create cmd/bot/main.go with bot initialization (load TELEGRAM_BOT_TOKEN, create bot, start polling)
-- [ ] T010 [US1] Implement /start handler in internal/handlers/greeting.go (calls Greet(), logs user ID, sends response)
-- [ ] T011 [US1] Register /start handler in cmd/bot/main.go
-- [ ] T012 [US1] Test manually: set TELEGRAM_BOT_TOKEN, run bot, send /start, verify response and logs
+- [x] T009 [US1] Create cmd/bot/main.go with bot initialization (load TELEGRAM_BOT_TOKEN, create bot, start polling)
+- [x] T010 [US1] Implement /start handler in internal/handlers/greeting.go (calls Greet(), logs user ID, sends response)
+- [x] T011 [US1] Register /start handler in cmd/bot/main.go
+- [x] T012 [US1] Test manually: set TELEGRAM_BOT_TOKEN, run bot, send /start, verify response and logs
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - bot handles /start command correctly
 
@@ -72,10 +72,10 @@ Single project structure per plan.md:
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Implement OnText handler in internal/handlers/greeting.go (filters for "hello", calls Greet(), logs user ID)
-- [ ] T014 [US2] Register OnText handler in cmd/bot/main.go
-- [ ] T015 [US2] Test manually: send "hello", verify response and logs
-- [ ] T016 [US2] Test edge case: send "Hello" (capitalized), verify NO response (case-sensitive per spec)
+- [x] T013 [US2] Implement OnText handler in internal/handlers/greeting.go (filters for "hello", calls Greet(), logs user ID)
+- [x] T014 [US2] Register OnText handler in cmd/bot/main.go
+- [X] T015 [US2] Test manually: send "hello", verify response and logs
+- [X] T016 [US2] Test edge case: send "Hello" (capitalized), verify NO response (case-sensitive per spec)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently - bot handles both /start and "hello"
 
@@ -85,12 +85,12 @@ Single project structure per plan.md:
 
 **Purpose**: Final validation and cleanup
 
-- [ ] T017 Run `go fmt ./...` to format all Go code
-- [ ] T018 Run `go test ./... -v` and verify greeter test passes
-- [ ] T019 Verify go.mod and go.sum are committed
-- [ ] T020 Test concurrent users: send multiple messages quickly, verify all get responses
-- [ ] T021 Verify logs contain user IDs for all messages
-- [ ] T022 Review code against spec - confirm no out-of-scope features added (no database, no Mini App, no LLM, no deployment, no extra commands)
+- [x] T017 Run `go fmt ./...` to format all Go code
+- [x] T018 Run `go test ./... -v` and verify greeter test passes
+- [x] T019 Verify go.mod and go.sum are committed
+- [X] T020 Test concurrent users: send multiple messages quickly, verify all get responses
+- [x] T021 Verify logs contain user IDs for all messages
+- [x] T022 Review code against spec - confirm no out-of-scope features added (no database, no Mini App, no LLM, no deployment, no extra commands)
 
 ---
 
