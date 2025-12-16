@@ -24,23 +24,23 @@ const (
 // UserSession tracks in-memory session state for a single user during /estimate flow
 // Stored in sync.Map keyed by UserID (thread-safe, in-memory only)
 type UserSession struct {
-	// UserID is the Telegram user ID (from c.Sender().ID)
-	UserID int64
-
-	// State is the current flow state
-	State SessionState
-
 	// LastActivity tracks the last user interaction (for cleanup after 15 min timeout)
 	LastActivity time.Time
 
+	// UserID is the Telegram user ID (from c.Sender().ID)
+	UserID int64
+
 	// MessageID is the ID of the last bot message (for editing/deletion)
 	MessageID int
+
+	// State is the current flow state
+	State SessionState
 }
 
 // EstimateResult holds the calorie estimation output from Gemini Vision API
 type EstimateResult struct {
-	// Calories is the total estimated calories (kcal)
-	Calories int `json:"calories"`
+	// Reasoning provides brief explanation from Gemini (optional)
+	Reasoning string `json:"reasoning,omitempty"`
 
 	// Confidence level: "low", "medium", or "high"
 	Confidence string `json:"confidence"`
@@ -48,8 +48,8 @@ type EstimateResult struct {
 	// FoodItems contains detected food items (empty array if no food)
 	FoodItems []string `json:"items,omitempty"`
 
-	// Reasoning provides brief explanation from Gemini (optional)
-	Reasoning string `json:"reasoning,omitempty"`
+	// Calories is the total estimated calories (kcal)
+	Calories int `json:"calories"`
 }
 
 // FormatResult formats an EstimateResult into fixed-format response per FR-006

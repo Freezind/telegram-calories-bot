@@ -4,6 +4,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/freezind/telegram-calories-bot/src/handlers"
@@ -62,12 +63,30 @@ func main() {
 
 	// Register callback handlers for inline buttons
 	bot.Handle(telebot.OnCallback, func(c telebot.Context) error {
-		switch c.Callback().Data {
+		callbackData := strings.TrimSpace(c.Callback().Data) // Trim whitespace/newlines
+		userID := c.Sender().ID
+
+		// Log callback received with details
+		log.Printf("[CALLBACK] User %d clicked button. Callback data: '%s' (after trim)", userID, callbackData)
+
+		var err error
+		switch callbackData {
 		case "re_estimate":
-			return estimateHandler.HandleReEstimate(c)
+			log.Printf("[CALLBACK] Handling re_estimate for user %d", userID)
+			err = estimateHandler.HandleReEstimate(c)
+			if err != nil {
+				log.Printf("[CALLBACK ERROR] HandleReEstimate failed for user %d: %v", userID, err)
+			}
+			return err
 		case "cancel":
-			return estimateHandler.HandleCancel(c)
+			log.Printf("[CALLBACK] Handling cancel for user %d", userID)
+			err = estimateHandler.HandleCancel(c)
+			if err != nil {
+				log.Printf("[CALLBACK ERROR] HandleCancel failed for user %d: %v", userID, err)
+			}
+			return err
 		default:
+			log.Printf("[CALLBACK WARNING] Unknown callback data '%s' from user %d", callbackData, userID)
 			return c.Respond(&telebot.CallbackResponse{Text: "Unknown action"})
 		}
 	})

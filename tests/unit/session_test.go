@@ -144,3 +144,52 @@ func TestSessionManager_ConcurrentAccess(t *testing.T) {
 	session := sm.GetSession(userID)
 	assert.NotNil(t, session)
 }
+
+// T043: Unit test for session state after Re-estimate
+// Tests: verify session not deleted, state reset to AwaitingImage
+func TestSessionManager_ReEstimateFlow(t *testing.T) {
+	sm := services.NewSessionManager()
+	userID := int64(12345)
+
+	// Simulate completed estimation (Idle state)
+	sm.UpdateSession(userID, models.StateIdle)
+
+	// Re-estimate should transition to AwaitingImage
+	session := sm.UpdateSession(userID, models.StateAwaitingImage)
+	assert.Equal(t, models.StateAwaitingImage, session.State)
+	assert.NotNil(t, session, "Session should not be deleted on re-estimate")
+}
+
+// T053: Unit test for Cancel from AwaitingImage state
+// Tests: verify session deleted
+func TestSessionManager_CancelFromAwaitingImage(t *testing.T) {
+	sm := services.NewSessionManager()
+	userID := int64(12345)
+
+	// Create session in AwaitingImage state
+	sm.UpdateSession(userID, models.StateAwaitingImage)
+
+	// Cancel should delete session
+	sm.DeleteSession(userID)
+
+	// Getting session again should create a new one in Idle state
+	session := sm.GetSession(userID)
+	assert.Equal(t, models.StateIdle, session.State, "New session should be in Idle state")
+}
+
+// T054: Unit test for Cancel from Processing state
+// Tests: verify session deleted even if Gemini call in progress
+func TestSessionManager_CancelFromProcessing(t *testing.T) {
+	sm := services.NewSessionManager()
+	userID := int64(12345)
+
+	// Create session in Processing state
+	sm.UpdateSession(userID, models.StateProcessing)
+
+	// Cancel should delete session regardless of state
+	sm.DeleteSession(userID)
+
+	// Verify session was deleted
+	session := sm.GetSession(userID)
+	assert.Equal(t, models.StateIdle, session.State, "New session after cancel should be in Idle")
+}

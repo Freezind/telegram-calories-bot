@@ -88,42 +88,42 @@ Per plan.md, this is a **single project** structure:
 
 > **RED**: Write these tests FIRST, ensure they FAIL before implementation
 
-- [ ] T019 [P] [US1] Unit test for EstimateResult validation in tests/unit/estimate_test.go (test calories >0, confidence in {low,medium,high}, empty items for no food)
-- [ ] T020 [P] [US1] Unit test for SessionManager state transitions in tests/unit/session_test.go (test Idle→AwaitingImage, AwaitingImage→Processing, Processing→Idle)
-- [ ] T021 [P] [US1] Unit test for GeminiClient JSON parsing in tests/unit/gemini_test.go (mock Gemini API responses, test success + no-food + error cases)
-- [ ] T022 [P] [US1] Unit test for image format validation in tests/unit/handlers_test.go (test JPEG/PNG/WebP accepted, others rejected per FR-003)
-- [ ] T023 [P] [US1] Unit test for multiple image rejection in tests/unit/handlers_test.go (test FR-015: reject all images when multiple uploaded)
+- [x] T019 [P] [US1] Unit test for EstimateResult validation in tests/unit/estimate_test.go (test calories >0, confidence in {low,medium,high}, empty items for no food)
+- [x] T020 [P] [US1] Unit test for SessionManager state transitions in tests/unit/session_test.go (test Idle→AwaitingImage, AwaitingImage→Processing, Processing→Idle)
+- [x] T021 [P] [US1] Unit test for GeminiClient JSON parsing in tests/unit/gemini_test.go (mock Gemini API responses, test success + no-food + error cases)
+- [x] T022 [P] [US1] Unit test for image format validation in tests/unit/handlers_test.go (test JPEG/PNG/WebP accepted, others rejected per FR-003)
+- [x] T023 [P] [US1] Unit test for multiple image rejection in tests/unit/handlers_test.go (test FR-015: reject all images when multiple uploaded)
 
 ### Implementation for User Story 1 (Make Tests GREEN)
 
 > **GREEN**: Implement minimum code to make tests pass
 
-- [ ] T024 [US1] Implement /estimate command handler in src/handlers/estimate.go (transition Idle→AwaitingImage, send prompt "Please upload one food image")
-- [ ] T025 [US1] Implement OnPhoto handler in src/handlers/estimate.go (validate state=AwaitingImage, check single image, download image)
-- [ ] T026 [US1] Add image format validation in src/handlers/estimate.go (check MIME type is image/jpeg|png|webp per FR-003)
-- [ ] T027 [US1] Add multiple image detection in src/handlers/estimate.go (check len(msg.Album) > 1, reject all with FR-015 message)
-- [ ] T028 [US1] Integrate GeminiClient in src/handlers/estimate.go (call EstimateCalories with image bytes, handle response)
-- [ ] T029 [US1] Create inline keyboard with Re-estimate and Cancel buttons in src/handlers/estimate.go (per FR-007)
-- [ ] T030 [US1] Format and send calorie estimate result in src/handlers/estimate.go (use FormatResult, include inline buttons, transition Processing→Idle)
-- [ ] T031 [US1] Add error handling for invalid images in src/handlers/estimate.go (corrupted file, invalid format → FR-013 message)
-- [ ] T032 [US1] Add error handling for no food detected in src/handlers/estimate.go (empty FoodItems → FR-014 message)
-- [ ] T033 [US1] Add error handling for Gemini API errors in src/handlers/estimate.go (timeout, rate limit → clear session, go Idle)
+- [x] T024 [US1] Implement /estimate command handler in src/handlers/estimate.go (transition Idle→AwaitingImage, send prompt "Please upload one food image")
+- [x] T025 [US1] Implement OnPhoto handler in src/handlers/estimate.go (validate state=AwaitingImage, check single image, download image)
+- [x] T026 [US1] Add image format validation in src/handlers/estimate.go (check MIME type is image/jpeg|png|webp per FR-003)
+- [x] T027 [US1] Add multiple image detection in src/handlers/estimate.go (check len(msg.Album) > 1, reject all with FR-015 message)
+- [x] T028 [US1] Integrate GeminiClient in src/handlers/estimate.go (call EstimateCalories with image bytes, handle response)
+- [x] T029 [US1] Create inline keyboard with Re-estimate and Cancel buttons in src/handlers/estimate.go (per FR-007)
+- [x] T030 [US1] Format and send calorie estimate result in src/handlers/estimate.go (use FormatResult, include inline buttons, transition Processing→Idle)
+- [x] T031 [US1] Add error handling for invalid images in src/handlers/estimate.go (corrupted file, invalid format → FR-013 message)
+- [x] T032 [US1] Add error handling for no food detected in src/handlers/estimate.go (empty FoodItems → FR-014 message)
+- [x] T033 [US1] Add error handling for Gemini API errors in src/handlers/estimate.go (timeout, rate limit → clear session, go Idle)
 
 ### Integration Tests for User Story 1 (Verify End-to-End)
 
 > **Integration**: Test full user journey with real bot and Gemini API
 
-- [ ] T034 [US1] Integration test for happy path in tests/integration/estimate_flow_test.go (simulate: /estimate → upload test image → verify result format + buttons)
-- [ ] T035 [US1] Integration test for non-food image in tests/integration/estimate_flow_test.go (simulate: /estimate → upload landscape → verify FR-014 error)
-- [ ] T036 [US1] Integration test for multiple images in tests/integration/estimate_flow_test.go (simulate: /estimate → upload 3 images → verify FR-015 rejection)
-- [ ] T037 [US1] Integration test for invalid format in tests/integration/estimate_flow_test.go (simulate: /estimate → upload .gif → verify FR-013 error)
+- [x] T034 [US1] Integration test for happy path in tests/integration/estimate_flow_test.go (simulate: /estimate → upload test image → verify result format + buttons)
+- [x] T035 [US1] Integration test for non-food image in tests/integration/estimate_flow_test.go (simulate: /estimate → upload landscape → verify FR-014 error)
+- [x] T036 [US1] Integration test for multiple images in tests/integration/estimate_flow_test.go (simulate: /estimate → upload 3 images → verify FR-015 rejection)
+- [x] T037 [US1] Integration test for invalid format in tests/integration/estimate_flow_test.go (simulate: /estimate → upload .gif → verify FR-013 error)
 
 ### Deliverables for User Story 1
 
-- [ ] T038 [US1] Archive all vibe coding prompts for US1 in `prompts/002-calorie-image-estimate/vibe-coding/003-user-story-1.md`
-- [ ] T039 [US1] Run gofmt on all US1 files: `gofmt -w src/handlers/estimate.go src/services/`
-- [ ] T040 [US1] Run golangci-lint on US1 code: `golangci-lint run src/handlers/ src/services/ src/models/`
-- [ ] T041 [US1] Run unit tests with coverage for US1: `go test ./tests/unit/... -cover` (must be ≥70% per constitution)
+- [x] T038 [US1] Archive all vibe coding prompts for US1 in `prompts/002-calorie-image-estimate/vibe-coding/003-user-story-1.md`
+- [x] T039 [US1] Run gofmt on all US1 files: `gofmt -w src/handlers/estimate.go src/services/`
+- [x] T040 [US1] Run golangci-lint on US1 code: `golangci-lint run src/handlers/ src/services/ src/models/`
+- [x] T041 [US1] Run unit tests with coverage for US1: `go test ./tests/unit/... -cover` (must be ≥70% per constitution)
 
 **User Story 1 Checkpoint**: At this point, User Story 1 should be fully functional and testable independently. Bot can accept /estimate, process single images, return calorie estimates with buttons. This is the **MVP**.
 

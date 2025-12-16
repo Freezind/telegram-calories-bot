@@ -207,10 +207,11 @@ func (h *EstimateHandler) processImage(c telebot.Context, fileID, mimeType strin
 // HandleReEstimate handles the Re-estimate button click (User Story 2)
 func (h *EstimateHandler) HandleReEstimate(c telebot.Context) error {
 	userID := c.Sender().ID
+	log.Printf("[HANDLER] HandleReEstimate called for user %d", userID)
 
 	// Update callback to show feedback
 	if err := c.Respond(&telebot.CallbackResponse{Text: "Send another image"}); err != nil {
-		log.Printf("Failed to respond to callback: %v", err)
+		log.Printf("[HANDLER ERROR] Failed to respond to re_estimate callback for user %d: %v", userID, err)
 	}
 
 	// Delete previous result message
@@ -230,21 +231,24 @@ func (h *EstimateHandler) HandleReEstimate(c telebot.Context) error {
 
 	msg, err := c.Bot().Send(c.Sender(), "📸 Please send another food image", markup)
 	if err != nil {
+		log.Printf("[HANDLER ERROR] Failed to send re-estimate prompt for user %d: %v", userID, err)
 		return fmt.Errorf("failed to send re-estimate prompt: %w", err)
 	}
 
 	h.sessionManager.SetMessageID(userID, msg.ID)
 
+	log.Printf("[HANDLER] HandleReEstimate completed successfully for user %d", userID)
 	return nil
 }
 
 // HandleCancel handles the Cancel button click (User Story 3)
 func (h *EstimateHandler) HandleCancel(c telebot.Context) error {
 	userID := c.Sender().ID
+	log.Printf("[HANDLER] HandleCancel called for user %d", userID)
 
 	// Update callback to show feedback
 	if err := c.Respond(&telebot.CallbackResponse{Text: "Estimation canceled"}); err != nil {
-		log.Printf("Failed to respond to callback: %v", err)
+		log.Printf("[HANDLER ERROR] Failed to respond to cancel callback for user %d: %v", userID, err)
 	}
 
 	// Delete the message with Cancel button
@@ -258,9 +262,11 @@ func (h *EstimateHandler) HandleCancel(c telebot.Context) error {
 	// Send cancellation confirmation (FR-013)
 	_, err := c.Bot().Send(c.Sender(), "Estimation canceled. Use /estimate to start again.")
 	if err != nil {
+		log.Printf("[HANDLER ERROR] Failed to send cancellation message for user %d: %v", userID, err)
 		return fmt.Errorf("failed to send cancellation message: %w", err)
 	}
 
+	log.Printf("[HANDLER] HandleCancel completed successfully for user %d", userID)
 	return nil
 }
 
