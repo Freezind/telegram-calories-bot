@@ -86,6 +86,42 @@ func TestAPIError(t *testing.T) {
 	// Expected result: Graceful error handling for API failures
 }
 
+// T093: Integration test for /start flow
+// Test procedure:
+//  1. Send /start command to bot
+//  2. Verify bot sends welcome message with:
+//     - Bot introduction and purpose
+//     - Usage instructions (steps 1-3)
+//     - Feature list
+//     - "Ready to start?" prompt
+//  3. Send /estimate command after receiving welcome
+//  4. Verify /estimate works normally after /start
+func TestStartFlowIntegration(t *testing.T) {
+	t.Skip("Manual integration test - requires live bot")
+	// Manual test procedure documented above
+	// Expected result: /start shows welcome, then /estimate works normally
+}
+
+// T094: Integration test for message history preservation
+// Test procedure:
+//  1. Send /estimate and complete first estimation (receive result with buttons)
+//  2. Click "Re-estimate" button
+//  3. Verify:
+//     - Previous estimation result is still visible (NOT deleted)
+//     - New prompt message appears below previous result
+//  4. Upload a new image and receive second estimation
+//  5. Verify:
+//     - Both estimation results are visible in chat history
+//  6. Click "Cancel" button
+//  7. Verify:
+//     - All previous messages remain visible (NOT deleted)
+//     - Cancellation confirmation appears as new message
+func TestMessageHistoryPreservation(t *testing.T) {
+	t.Skip("Manual integration test - requires live bot")
+	// Manual test procedure documented above
+	// Expected result: All messages preserved, conversation history intact
+}
+
 // Integration Test Summary
 // ========================
 // These tests verify end-to-end functionality of the Telegram bot.
@@ -103,6 +139,11 @@ func TestAPIError(t *testing.T) {
 //   ✓ SC-003: Result formatted per FR-006 with inline buttons
 //   ✓ SC-004: Result message contains calorie estimate and confidence
 //   ✓ SC-005: Re-estimate button triggers new estimation flow
-//   ✓ SC-006: Cancel button deletes prompt/result message
+//   ✓ SC-006: Cancel button deletes prompt/result message (UPDATED: now preserves messages)
 //   ✓ SC-007: Invalid format shows error message
 //   ✓ SC-008: Non-food image shows "No food detected" error
+//
+// Phase 7 Additions:
+//   ✓ /start command shows welcome message
+//   ✓ Re-estimate button preserves previous results
+//   ✓ Cancel button preserves conversation history

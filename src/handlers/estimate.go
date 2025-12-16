@@ -13,11 +13,25 @@ import (
 	telebot "gopkg.in/telebot.v3"
 )
 
-// EstimateHandler handles the /estimate command (T024)
-// Initiates the calorie estimation flow per FR-001
+// EstimateHandler handles bot commands and interactions
+// Handles /start, /estimate, image uploads, and inline buttons
 type EstimateHandler struct {
 	sessionManager *services.SessionManager
 	geminiClient   *services.GeminiClient
+}
+
+// HandleStart handles the /start command (T086)
+// Sends welcome message with bot introduction and usage instructions
+func (h *EstimateHandler) HandleStart(c telebot.Context) error {
+	welcomeMsg := models.FormatWelcomeMessage()
+	_, err := c.Bot().Send(c.Sender(), welcomeMsg)
+	if err != nil {
+		log.Printf("[HANDLER ERROR] Failed to send welcome message: %v", err)
+		return fmt.Errorf("failed to send welcome message: %w", err)
+	}
+
+	log.Printf("[HANDLER] HandleStart sent welcome message to user %d", c.Sender().ID)
+	return nil
 }
 
 // NewEstimateHandler creates a new EstimateHandler instance
@@ -205,6 +219,7 @@ func (h *EstimateHandler) processImage(c telebot.Context, fileID, mimeType strin
 }
 
 // HandleReEstimate handles the Re-estimate button click (User Story 2)
+// T089: Modified to preserve previous message (no deletion)
 func (h *EstimateHandler) HandleReEstimate(c telebot.Context) error {
 	userID := c.Sender().ID
 	log.Printf("[HANDLER] HandleReEstimate called for user %d", userID)
@@ -214,10 +229,9 @@ func (h *EstimateHandler) HandleReEstimate(c telebot.Context) error {
 		log.Printf("[HANDLER ERROR] Failed to respond to re_estimate callback for user %d: %v", userID, err)
 	}
 
-	// Delete previous result message
-	if err := c.Delete(); err != nil {
-		log.Printf("Failed to delete message: %v", err)
-	}
+	// T089: Keep previous result visible - DO NOT delete message
+	// Previous implementation deleted the message with c.Delete()
+	// Now we preserve conversation history
 
 	// Update state to AwaitingImage
 	h.sessionManager.UpdateSession(userID, models.StateAwaitingImage)
@@ -242,6 +256,7 @@ func (h *EstimateHandler) HandleReEstimate(c telebot.Context) error {
 }
 
 // HandleCancel handles the Cancel button click (User Story 3)
+// T090: Modified to preserve previous messages (no deletion)
 func (h *EstimateHandler) HandleCancel(c telebot.Context) error {
 	userID := c.Sender().ID
 	log.Printf("[HANDLER] HandleCancel called for user %d", userID)
@@ -251,10 +266,9 @@ func (h *EstimateHandler) HandleCancel(c telebot.Context) error {
 		log.Printf("[HANDLER ERROR] Failed to respond to cancel callback for user %d: %v", userID, err)
 	}
 
-	// Delete the message with Cancel button
-	if err := c.Delete(); err != nil {
-		log.Printf("Failed to delete message: %v", err)
-	}
+	// T090: Keep previous messages visible - DO NOT delete message
+	// Previous implementation deleted the message with c.Delete()
+	// Now we preserve conversation history
 
 	// Clean up session
 	h.sessionManager.DeleteSession(userID)

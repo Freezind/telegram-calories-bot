@@ -52,6 +52,26 @@ type EstimateResult struct {
 	Calories int `json:"calories"`
 }
 
+// FormatWelcomeMessage returns the bot introduction and usage instructions for /start command
+func FormatWelcomeMessage() string {
+	return `👋 Welcome to Calorie Estimation Bot!
+
+I help you estimate the calories in your food by analyzing images.
+
+**How to use:**
+1. Send /estimate command
+2. Upload a photo of your food
+3. Receive calorie estimate with confidence indicator
+
+**Features:**
+• 🍽️ Instant calorie estimation
+• 📊 Confidence indicators (Low/Medium/High)
+• 🔄 Re-estimate with different images
+• ❌ Cancel anytime
+
+Ready to start? Send /estimate to begin!`
+}
+
 // FormatResult formats an EstimateResult into fixed-format response per FR-006
 // Returns deterministic, consistent message structure
 func FormatResult(result *EstimateResult) string {

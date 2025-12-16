@@ -57,6 +57,7 @@ func main() {
 	estimateHandler := handlers.NewEstimateHandler(sessionManager, geminiClient)
 
 	// Register command handlers
+	bot.Handle("/start", estimateHandler.HandleStart)
 	bot.Handle("/estimate", estimateHandler.HandleEstimate)
 	bot.Handle(telebot.OnPhoto, estimateHandler.HandlePhoto)
 	bot.Handle(telebot.OnDocument, estimateHandler.HandleDocument)
