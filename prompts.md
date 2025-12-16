@@ -177,3 +177,62 @@ Constraints:
 ```
 /speckit.implement implement task Phase 7
 ```
+
+```
+/speckit.specify Build Spec 003: Telegram Mini App MVP (local, in-memory, React) with a storage abstraction that is designed to migrate to Cloudflare D1 in Spec 004.
+
+Goal:
+Create a minimal Telegram Mini App (Web App) that lets a user view and manage a list of calorie estimate records via a simple GUI, runnable locally for demo purposes. Data is stored in-memory only for Spec 003, but the architecture MUST include a storage abstraction so we can swap to Cloudflare D1 later without changing business logic or UI behavior.
+
+In scope:
+1) Mini App (React)
+- Single-page UI with a table/list of records.
+- Minimal CRUD:
+  - Create: add a new record (calories number + optional note)
+  - Update: edit calories and/or note
+  - Delete: remove a record
+- Clear empty-state when no records exist.
+- Basic readability only (no design requirements).
+
+2) Local backend API (in-memory implementation for this spec)
+- Provide a local HTTP API consumed by the React app:
+  - GET /api/logs
+  - POST /api/logs
+  - PATCH /api/logs/:id
+  - DELETE /api/logs/:id
+- Data MUST be stored in process memory only. No files, no SQLite, no external DB/services.
+- Restart resets all data.
+
+3) Storage abstraction (required for migration)
+- Introduce a clear storage interface (repository/data-access layer) that defines CRUD operations for logs.
+- The API handlers and business logic MUST depend only on this interface, not on the concrete in-memory store.
+- Provide one concrete implementation: InMemoryLogStore.
+- Include a stub/skeleton for a future D1-backed implementation (no Cloudflare code yet), and document the expected mapping (table name + fields) in a short design note.
+
+4) Telegram integration (minimal)
+- App must run in a normal browser for local dev, and also work inside Telegram as a Web App.
+- In Telegram context, read and display Telegram user info if available via Telegram WebApp initData.
+- Do NOT require server-side initData signature verification in this spec (defer to Spec 004).
+- If user id is available, scope records per user in-memory; otherwise use a single shared store for local dev.
+
+5) Deliverables
+- Local run instructions (frontend + backend).
+- Clean, readable code.
+- Prompts archive: all vibe coding prompts copied verbatim into prompts.md (no summaries), with no secrets.
+
+Non-goals (out of scope for Spec 003):
+- Any persistence (SQLite/D1/files/R2/etc.)
+- Any cloud hosting or deployment automation
+- Server-side Telegram initData verification/auth hardening
+- Integration with Gemini/LLM or image uploads
+- Complex UI/UX or multi-page app
+
+Success criteria:
+- Locally, a user can create/edit/delete records and see immediate updates.
+- API and UI behavior are deterministic.
+- Restarting the backend clears all data.
+- The data layer is abstracted so migrating to D1 in Spec 004 requires replacing only the store implementation, not rewriting handlers or UI.
+```
+
+```
+```

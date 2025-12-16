@@ -86,29 +86,24 @@ Sync Impact Report:
 
 #### Prompt Archiving Standards
 
-**All prompts used for vibe coding MUST be archived verbatim**:
+Prompt archiving is a FIRST-CLASS requirement and MUST happen BEFORE any other work.
 
 **Storage Requirements**:
-- Prompts MUST be copied exactly as used, without modification
-- Store in `prompts/<feature-name>/vibe-coding/*.md` files
-- One prompt per file, numbered sequentially (001-, 002-, etc.)
-- File naming: `<sequence>-<brief-description>.md`
+- All prompts used for vibe coding MUST be copied verbatim and stored as-is in `./prompts.md` at the repository root.
+- Chat history alone is NOT considered a valid prompt record.
 
 **Verbatim Preservation Rules**:
-- Prompts MUST NOT be paraphrased, summarized, rewritten, or edited
-- Original wording, structure, formatting, and ordering MUST be preserved
-- Chat history alone is NOT considered a valid prompt record
-- Include full context provided to AI (system prompts, examples, constraints)
+- Prompts MUST NOT be paraphrased, summarized, rewritten, or edited.
+- The original wording, structure, formatting, and ordering MUST be preserved.
+- Each new prompt MUST be appended to `prompts.md` in chronological order.
 
 **Security Constraints**:
-- Prompts MUST NOT contain secrets, API keys, tokens, or personal data
-- Sanitize any accidentally included sensitive data before archiving
-- Use placeholder text (e.g., `<REDACTED>`, `<API_KEY>`) if prompt referenced secrets
+- Prompts MUST NOT contain secrets, API keys, tokens, or personal data.
+- If sensitive data is accidentally included, it MUST be redacted before saving using placeholders such as `<REDACTED>`, `<API_KEY>`.
 
 **Compliance**:
-- Prompts are first-class deliverables for this project
-- Failure to provide complete and verbatim prompt archive is a constitution violation
-- Code review MUST verify prompt archive completeness and accuracy
+- Failure to provide a complete and verbatim prompt archive in `prompts.md` is a constitution violation.
+- Code review MUST verify `prompts.md` is updated before accepting changes.
 
 **Rationale**: Prompts are essential for understanding AI-assisted development decisions, reproducing implementations, and improving future prompt engineering. Verbatim preservation ensures fidelity and prevents knowledge loss through summarization.
 
