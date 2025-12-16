@@ -36,3 +36,9 @@ coverage.html
 .DS_Store
 Thumbs.db
 bin/
+
+# Frontend (Node.js / Vite)
+node_modules/
+dist/
+web/dist/
+*.local

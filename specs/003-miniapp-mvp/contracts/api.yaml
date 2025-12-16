@@ -1,0 +1,394 @@
+openapi: 3.0.3
+info:
+  title: Telegram Calories Bot - Mini App API
+  description: |
+    HTTP API for calorie log CRUD operations in Telegram Mini App MVP.
+
+    **Authentication**: All requests MUST include `X-Telegram-Init-Data` header containing Telegram WebApp initData.
+    User identity is extracted EXCLUSIVELY from initData for authorization and data scoping.
+
+    **FORBIDDEN**: Backend MUST NOT accept userID via query parameters or request body.
+    Any attempt to pass userID explicitly will be rejected or ignored.
+
+    **Scope**: Local development demo only (in-memory storage, no persistence).
+  version: 1.0.0
+  contact:
+    name: Telegram Calories Bot
+    url: https://github.com/freezind/telegram-calories-bot
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+security:
+  - TelegramInitData: []
+
+paths:
+  /api/logs:
+    get:
+      summary: List all logs for authenticated user
+      description: |
+        Returns all calorie logs for the authenticated user, sorted by timestamp descending (newest first).
+        Empty array if user has no logs.
+      operationId: listLogs
+      tags:
+        - Logs
+      responses:
+        '200':
+          description: Successfully retrieved logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Log'
+              examples:
+                withLogs:
+                  summary: User with existing logs
+                  value:
+                    logs:
+                      - id: "550e8400-e29b-41d4-a716-446655440000"
+                        userID: 12345
+                        foodItems: ["Rice", "Chicken", "Salad"]
+                        calories: 650
+                        confidence: "high"
+                        timestamp: "2025-12-16T10:30:00Z"
+                        createdAt: "2025-12-16T10:30:00Z"
+                        updatedAt: "2025-12-16T10:30:00Z"
+                      - id: "660e8400-e29b-41d4-a716-446655440001"
+                        userID: 12345
+                        foodItems: ["Salad", "Bread"]
+                        calories: 350
+                        confidence: "medium"
+                        timestamp: "2025-12-16T08:00:00Z"
+                        createdAt: "2025-12-16T08:00:05Z"
+                        updatedAt: "2025-12-16T08:00:05Z"
+                emptyLogs:
+                  summary: User with no logs
+                  value:
+                    logs: []
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create a new log entry
+      description: |
+        Creates a new calorie log for the authenticated user.
+        ID, CreatedAt, and UpdatedAt are generated server-side.
+        Timestamp defaults to current time if not provided.
+      operationId: createLog
+      tags:
+        - Logs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogCreate'
+            examples:
+              withTimestamp:
+                summary: Create log with explicit timestamp
+                value:
+                  foodItems: ["Pizza", "Soda"]
+                  calories: 850
+                  confidence: "medium"
+                  timestamp: "2025-12-16T19:00:00Z"
+              withoutTimestamp:
+                summary: Create log with default timestamp (now)
+                value:
+                  foodItems: ["Apple"]
+                  calories: 95
+                  confidence: "high"
+      responses:
+        '201':
+          description: Log created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Log'
+              example:
+                id: "770e8400-e29b-41d4-a716-446655440002"
+                userID: 12345
+                foodItems: ["Pizza", "Soda"]
+                calories: 850
+                confidence: "medium"
+                timestamp: "2025-12-16T19:00:00Z"
+                createdAt: "2025-12-16T19:05:00Z"
+                updatedAt: "2025-12-16T19:05:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/logs/{id}:
+    patch:
+      summary: Update an existing log entry
+      description: |
+        Partially updates an existing log entry.
+        Only provided fields are modified (foodItems, calories, confidence).
+        UpdatedAt is automatically set to current time.
+        ID, UserID, Timestamp, CreatedAt are immutable.
+      operationId: updateLog
+      tags:
+        - Logs
+      parameters:
+        - $ref: '#/components/parameters/LogID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogUpdate'
+            examples:
+              updateCalories:
+                summary: Update only calories
+                value:
+                  calories: 500
+              updateMultiple:
+                summary: Update multiple fields
+                value:
+                  calories: 700
+                  confidence: "high"
+                  foodItems: ["Pizza", "Soda", "Salad"]
+      responses:
+        '200':
+          description: Log updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Log'
+              example:
+                id: "770e8400-e29b-41d4-a716-446655440002"
+                userID: 12345
+                foodItems: ["Pizza", "Soda", "Salad"]
+                calories: 700
+                confidence: "high"
+                timestamp: "2025-12-16T19:00:00Z"
+                createdAt: "2025-12-16T19:05:00Z"
+                updatedAt: "2025-12-16T19:15:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete a log entry
+      description: |
+        Deletes a log entry by ID.
+        Only the authenticated user can delete their own logs (enforced via userID check).
+      operationId: deleteLog
+      tags:
+        - Logs
+      parameters:
+        - $ref: '#/components/parameters/LogID'
+      responses:
+        '204':
+          description: Log deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    TelegramInitData:
+      type: apiKey
+      in: header
+      name: X-Telegram-Init-Data
+      description: |
+        Telegram WebApp initData string (URL-encoded query parameters).
+        Contains user authentication information extracted from Telegram client.
+
+  parameters:
+    LogID:
+      name: id
+      in: path
+      required: true
+      description: UUID v4 identifier of the log entry
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+  schemas:
+    Log:
+      type: object
+      required:
+        - id
+        - userID
+        - foodItems
+        - calories
+        - confidence
+        - timestamp
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        userID:
+          type: integer
+          format: int64
+          description: Telegram user ID (from initData)
+          example: 12345
+        foodItems:
+          type: array
+          description: Array of food item names (1-10 items, each max 1000 chars)
+          minItems: 1
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 1000
+          example: ["Rice", "Chicken", "Salad"]
+        calories:
+          type: integer
+          description: Total estimated calories in kcal
+          minimum: 0
+          example: 650
+        confidence:
+          type: string
+          description: Confidence level of calorie estimation
+          enum: [low, medium, high]
+          example: "high"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the food was consumed (ISO 8601)
+          example: "2025-12-16T10:30:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          description: When the log entry was created (ISO 8601)
+          example: "2025-12-16T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the log entry was last updated (ISO 8601)
+          example: "2025-12-16T10:30:00Z"
+
+    LogCreate:
+      type: object
+      required:
+        - foodItems
+        - calories
+        - confidence
+      properties:
+        foodItems:
+          type: array
+          description: Array of food item names (1-10 items, each max 1000 chars)
+          minItems: 1
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 1000
+          example: ["Pizza", "Soda"]
+        calories:
+          type: integer
+          description: Total estimated calories in kcal
+          minimum: 0
+          example: 850
+        confidence:
+          type: string
+          description: Confidence level of calorie estimation
+          enum: [low, medium, high]
+          example: "medium"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the food was consumed (defaults to now if not provided)
+          example: "2025-12-16T19:00:00Z"
+
+    LogUpdate:
+      type: object
+      description: Partial update object (all fields optional, at least one required)
+      minProperties: 1
+      properties:
+        foodItems:
+          type: array
+          description: Array of food item names (1-10 items, each max 1000 chars)
+          minItems: 1
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 1000
+          example: ["Pizza", "Soda", "Salad"]
+        calories:
+          type: integer
+          description: Total estimated calories in kcal
+          minimum: 0
+          example: 700
+        confidence:
+          type: string
+          description: Confidence level of calorie estimation
+          enum: [low, medium, high]
+          example: "high"
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Invalid request: calories must be non-negative"
+
+  responses:
+    BadRequest:
+      description: Invalid request (validation error)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            validation:
+              summary: Validation error
+              value:
+                error: "Validation failed: FoodItems cannot exceed 10 items"
+            invalidJSON:
+              summary: Malformed JSON
+              value:
+                error: "Invalid JSON format"
+
+    Unauthorized:
+      description: Missing or invalid Telegram initData
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            missingHeader:
+              summary: Missing X-Telegram-Init-Data header
+              value:
+                error: "Unauthorized: missing X-Telegram-Init-Data header"
+            invalidInitData:
+              summary: Invalid initData format
+              value:
+                error: "Unauthorized: invalid initData format"
+
+    NotFound:
+      description: Log entry not found or unauthorized access
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            notFound:
+              summary: Log ID does not exist
+              value:
+                error: "Log not found"
+            unauthorized:
+              summary: User attempting to access another user's log
+              value:
+                error: "Unauthorized: log belongs to different user"
+
+tags:
+  - name: Logs
+    description: Calorie log CRUD operations

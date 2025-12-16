@@ -235,4 +235,25 @@ Success criteria:
 ```
 
 ```
+/speckit.clarify
+```
+
+```
+/speckit.plan
+```
+
+```
+/speckit.plan Update the plan to align with the latest spec and constitution:
+
+  - This is a demo MVP. REMOVE ALL performance and latency metrics (e.g. 200ms/500ms). Performance is explicitly out of scope.
+  - Remove prompt-archiving details from the plan. Prompt archiving is handled by the constitution only. If mentioned, it MUST refer solely to
+  ./prompts.md at repo root (no prompts/ directories).
+  - Explicitly state that the backend MUST NOT accept userID via query params or request body. User identity MUST be derived exclusively from
+  X-Telegram-Init-Data.
+  - Reduce documentation overhead: keep quickstart.md; make research.md and OpenAPI contracts optional and non-blocking.
+  - Focus the plan on functional correctness, simplicity, and demo viability only. Avoid over-engineering.
+```
+
+```
+/speckit.tasks
 ```

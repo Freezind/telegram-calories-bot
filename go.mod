@@ -5,6 +5,8 @@ go 1.24.0
 toolchain go1.24.11
 
 require (
+	github.com/google/uuid v1.6.0
+	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/genai v1.39.0
 	gopkg.in/telebot.v3 v3.3.8
