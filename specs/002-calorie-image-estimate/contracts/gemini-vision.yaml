@@ -1,0 +1,312 @@
+---
+# Gemini Vision API Contract
+# Feature: 002-calorie-image-estimate
+# Purpose: Define request/response format for calorie estimation via Google Gemini Vision
+# Reference: research.md Decision 1 & 3
+
+api_version: v1
+service: Google Generative AI (Gemini)
+model: gemini-2.5-flash  # Fast, cost-effective multimodal model
+base_url: https://generativelanguage.googleapis.com
+
+authentication:
+  type: API Key
+  header: x-goog-api-key
+  source: Environment variable GEMINI_API_KEY
+  validation: Must validate on bot startup (fail fast if missing/invalid)
+
+---
+# Request Contract
+
+endpoint: POST /v1/models/gemini-2.5-flash:generateContent
+
+headers:
+  Content-Type: application/json
+  x-goog-api-key: ${GEMINI_API_KEY}
+
+request_body:
+  contents:
+    - role: user
+      parts:
+        # Part 1: Prompt text (from research.md Decision 3)
+        - text: |
+            You are a nutrition analysis assistant. Analyze this food image and estimate total calories.
+
+            Output ONLY valid JSON with this exact structure:
+            {
+              "calories": <number>,
+              "confidence": "low|medium|high",
+              "items": ["food1", "food2", ...],
+              "reasoning": "brief explanation"
+            }
+
+            Confidence levels:
+            - high: Common foods, clear portions visible
+            - medium: Some foods recognizable, portions estimated
+            - low: Unclear foods or portions, or non-food image
+
+            If no food detected, return:
+            {"calories": 0, "confidence": "low", "items": [], "reasoning": "No food detected"}
+
+            Example (grilled chicken with vegetables):
+            {"calories": 450, "confidence": "high", "items": ["Grilled chicken breast (200g)", "Steamed broccoli (100g)", "Brown rice (150g)"], "reasoning": "Standard portions for grilled chicken plate"}
+
+        # Part 2: Image data (base64 encoded from Telegram download)
+        - inline_data:
+            mime_type: image/jpeg  # or image/png, image/webp (validated via FR-003)
+            data: <base64_encoded_image_bytes>
+
+  # Configuration for deterministic output (from research.md)
+  generation_config:
+    temperature: 0.2        # Low temperature for consistent results
+    top_p: 0.8
+    top_k: 40
+    max_output_tokens: 512  # Sufficient for JSON response
+    response_mime_type: application/json  # Force JSON output
+
+---
+# Response Contract (Success)
+
+status: 200 OK
+
+response_body:
+  candidates:
+    - content:
+        parts:
+          - text: |
+              {
+                "calories": 650,
+                "confidence": "high",
+                "items": [
+                  "Grilled chicken breast (200g)",
+                  "Steamed broccoli (100g)",
+                  "Brown rice (150g)",
+                  "Olive oil dressing (1 tbsp)"
+                ],
+                "reasoning": "Standard portions for grilled chicken plate with vegetables and rice"
+              }
+        role: model
+      finish_reason: STOP
+      safety_ratings:
+        - category: HARM_CATEGORY_HATE_SPEECH
+          probability: NEGLIGIBLE
+        - category: HARM_CATEGORY_DANGEROUS_CONTENT
+          probability: NEGLIGIBLE
+
+  usage_metadata:
+    prompt_token_count: 150
+    candidates_token_count: 80
+    total_token_count: 230
+
+# Parse response: Extract candidates[0].content.parts[0].text → JSON string → EstimateResult struct
+
+---
+# Response Contract (No Food Detected)
+
+status: 200 OK
+
+response_body:
+  candidates:
+    - content:
+        parts:
+          - text: |
+              {
+                "calories": 0,
+                "confidence": "low",
+                "items": [],
+                "reasoning": "No food detected in image. Image appears to be a landscape/person/object."
+              }
+        role: model
+      finish_reason: STOP
+
+# Trigger FR-014 error handling: "No food detected in image. Try another photo?"
+
+---
+# Error Contract (Rate Limit)
+
+status: 429 Too Many Requests
+
+response_body:
+  error:
+    code: 429
+    message: RESOURCE_EXHAUSTED
+    status: RESOURCE_EXHAUSTED
+
+# User-facing message: "Service busy. Please wait a moment and try again."
+# Technical action: Log error, clear session, transition to Idle
+
+---
+# Error Contract (Invalid API Key)
+
+status: 403 Forbidden
+
+response_body:
+  error:
+    code: 403
+    message: API key not valid. Please pass a valid API key.
+    status: PERMISSION_DENIED
+
+# Technical action: Fail bot startup (panic or exit), log error
+# User-facing message: None (bot does not start)
+
+---
+# Error Contract (Invalid Image)
+
+status: 400 Bad Request
+
+response_body:
+  error:
+    code: 400
+    message: Invalid argument. Image data is corrupted or unsupported format.
+    status: INVALID_ARGUMENT
+
+# User-facing message (FR-013): "Invalid image format. Please upload JPEG, PNG, or WebP."
+# Technical action: Log error, stay in AwaitingImage state
+
+---
+# Error Contract (Network Timeout)
+
+# No HTTP response (client-side timeout after 30 seconds)
+
+# User-facing message: "Analysis timed out. Please try again."
+# Technical action: Log timeout, clear session, transition to Idle
+
+---
+# Implementation Notes
+
+client_library: google.golang.org/genai
+installation: go get google.golang.org/genai
+
+example_usage: |
+  import (
+      "context"
+      "encoding/json"
+      "fmt"
+      "os"
+      "google.golang.org/genai"
+  )
+
+  func EstimateCalories(ctx context.Context, imageBytes []byte, mimeType string) (*EstimateResult, error) {
+      client, err := genai.NewClient(ctx, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
+      if err != nil {
+          return nil, fmt.Errorf("genai client: %w", err)
+      }
+      defer client.Close()
+
+      model := client.GenerativeModel("gemini-2.5-flash")
+      model.SetTemperature(0.2)
+      model.GenerationConfig.ResponseMIMEType = "application/json"
+
+      prompt := `You are a nutrition analysis assistant...` // (full prompt from above)
+
+      resp, err := model.GenerateContent(ctx,
+          genai.Text(prompt),
+          genai.ImageData(mimeType, imageBytes),
+      )
+      if err != nil {
+          return nil, fmt.Errorf("generate content: %w", err)
+      }
+
+      if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
+          return nil, fmt.Errorf("no response from Gemini")
+      }
+
+      jsonText := resp.Candidates[0].Content.Parts[0].(genai.Text)
+      var result EstimateResult
+      if err := json.Unmarshal([]byte(jsonText), &result); err != nil {
+          return nil, fmt.Errorf("parse JSON: %w", err)
+      }
+
+      return &result, nil
+  }
+
+---
+# Validation Rules (Align with data-model.md)
+
+response_validation:
+  - calories: Must be non-negative integer (>= 0)
+  - confidence: Must be one of ["low", "medium", "high"]
+  - items: Array of strings (empty array if no food)
+  - reasoning: Non-empty string (for user transparency)
+
+error_handling:
+  - RESOURCE_EXHAUSTED: Retry with exponential backoff OR show "Service busy" to user
+  - PERMISSION_DENIED: Fail bot startup (invalid API key)
+  - INVALID_ARGUMENT: Show FR-013 error message to user
+  - Network timeout (30s): Show "Analysis timed out" to user
+  - Unexpected JSON structure: Log error, show "Analysis failed" to user
+
+---
+# Performance Targets (from spec.md Success Criteria)
+
+- SC-004: Image analysis + response delivery < 8 seconds
+- gemini-2.5-flash average latency: 2-4 seconds (per research.md)
+- Total latency budget: Image download (1s) + Gemini API (4s) + Response formatting (0.5s) = 5.5s
+- Buffer: 2.5 seconds for network variance
+
+---
+# Cost Estimation (Google AI Studio Free Tier)
+
+model: gemini-2.5-flash
+pricing:
+  - Input: $0.075 per 1M tokens
+  - Output: $0.30 per 1M tokens
+  - Images: Counted as ~258 tokens per image
+
+example_cost_per_request:
+  - Prompt: ~150 tokens
+  - Image: ~258 tokens
+  - Response: ~80 tokens
+  - Total: ~488 tokens
+  - Cost: $0.000037 per request (~$0.04 per 1000 requests)
+
+free_tier_limits:
+  - 1500 requests per day (ai.google.dev)
+  - 15 requests per minute
+  - Sufficient for MVP testing
+
+---
+# Security Considerations
+
+api_key_handling:
+  - NEVER hardcode API key in source code
+  - Load from environment variable only (GEMINI_API_KEY)
+  - Do not log API key in error messages or logs
+  - Validate key on bot startup (fail fast if missing)
+
+image_data:
+  - Do NOT persist uploaded images (FR-011)
+  - Hold in memory only during API call
+  - Clear image bytes after Gemini response
+  - Do not log base64 image data (too large)
+
+user_privacy:
+  - Log UserID for debugging but no PII
+  - Do not store estimation history (FR-010)
+  - Gemini API requests are not logged by Google (per privacy policy)
+
+---
+# Testing Strategy
+
+unit_tests:
+  - Mock Gemini API responses (tests/unit/gemini_test.go)
+  - Test JSON parsing for all response types (success, no food, errors)
+  - Test confidence level validation (only low/medium/high accepted)
+
+integration_tests:
+  - Real Gemini API calls with test images (tests/integration/)
+  - Verify response latency < 8 seconds (SC-004)
+  - Test error handling (invalid API key, network timeout)
+
+test_images:
+  - Provide 5-10 sample food images for repeatable testing
+  - Include edge cases: non-food, multiple foods, unclear portions
+  - Store in tests/fixtures/ (not in prompts/ to avoid confusion)
+
+---
+# References
+
+- Research: [research.md](../research.md) - Decision 1 (Gemini SDK) & Decision 3 (Prompt template)
+- Data Model: [data-model.md](../data-model.md) - EstimateResult struct definition
+- Spec: [spec.md](../spec.md) - FR-004, FR-013, FR-014, FR-016, SC-004
+- Official Docs: https://ai.google.dev/gemini-api/docs/vision

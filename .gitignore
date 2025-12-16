@@ -16,3 +16,23 @@
 
 # Dependency directories
 vendor/
+
+# Go workspace
+go.work
+go.work.sum
+
+# Coverage reports
+coverage.out
+coverage.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+bin/
