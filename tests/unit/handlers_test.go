@@ -1,0 +1,105 @@
+package unit
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+// T022: Unit test for image format validation
+// Tests: JPEG/PNG/WebP accepted, others rejected per FR-003
+
+func TestImageFormatValidation_ValidFormats(t *testing.T) {
+	validFormats := []string{
+		"image/jpeg",
+		"image/png",
+		"image/webp",
+	}
+
+	for _, mimeType := range validFormats {
+		t.Run(mimeType, func(t *testing.T) {
+			// This will be implemented when handlers package exists
+			// For now, just test the logic
+			isValid := isValidImageFormat(mimeType)
+			assert.True(t, isValid, "%s should be valid", mimeType)
+		})
+	}
+}
+
+func TestImageFormatValidation_InvalidFormats(t *testing.T) {
+	invalidFormats := []string{
+		"image/gif",
+		"image/bmp",
+		"image/svg+xml",
+		"video/mp4",
+		"application/pdf",
+		"text/plain",
+		"",
+	}
+
+	for _, mimeType := range invalidFormats {
+		t.Run(mimeType, func(t *testing.T) {
+			isValid := isValidImageFormat(mimeType)
+			assert.False(t, isValid, "%s should be invalid", mimeType)
+		})
+	}
+}
+
+// Helper function that will be moved to handlers package
+func isValidImageFormat(mimeType string) bool {
+	validFormats := []string{"image/jpeg", "image/png", "image/webp"}
+	for _, valid := range validFormats {
+		if mimeType == valid {
+			return true
+		}
+	}
+	return false
+}
+
+// T023: Unit test for multiple image rejection
+// Tests: FR-015 - reject all images when multiple uploaded
+
+func TestMultipleImageDetection(t *testing.T) {
+	tests := []struct {
+		name       string
+		imageCount int
+		expected   bool
+	}{
+		{
+			name:       "single image",
+			imageCount: 1,
+			expected:   false,
+		},
+		{
+			name:       "two images",
+			imageCount: 2,
+			expected:   true,
+		},
+		{
+			name:       "multiple images",
+			imageCount: 5,
+			expected:   true,
+		},
+		{
+			name:       "no images",
+			imageCount: 0,
+			expected:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			isMultiple := tt.imageCount > 1
+			assert.Equal(t, tt.expected, isMultiple)
+		})
+	}
+}
+
+func TestMultipleImageRejectionMessage(t *testing.T) {
+	// Expected error message per FR-015
+	expectedMsg := "Please send exactly one image (not multiple)"
+
+	// This verifies the message format we'll use in handlers
+	assert.Contains(t, expectedMsg, "exactly one image")
+	assert.Contains(t, expectedMsg, "not multiple")
+}

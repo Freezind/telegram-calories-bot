@@ -1,0 +1,69 @@
+# golangci-lint configuration for telegram-calories-bot
+# Feature: 002-calorie-image-estimate
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  govet:
+    enable-all: true
+
+  gofmt:
+    simplify: true
+
+  gocyclo:
+    min-complexity: 15
+
+  misspell:
+    locale: US
+
+  lll:
+    line-length: 120
+
+  unused:
+    check-exported: false
+
+linters:
+  enable:
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Report suspicious constructs
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Go static analysis
+    - typecheck     # Type-check Go code
+    - unused        # Check for unused constants, variables, functions
+    - gofmt         # Check if code is gofmt-ed
+    - gocyclo       # Check function complexity
+    - misspell      # Check for commonly misspelled words
+    - revive        # Fast, configurable, extensible linter
+    - gosec         # Security problems
+    - bodyclose     # Check HTTP response bodies are closed
+    - noctx         # Finds sending http request without context.Context
+    - errname       # Checks that errors are named with Err prefix
+    - exportloopref # Checks for pointers to enclosing loop variables
+    - goconst       # Finds repeated strings that could be constants
+    - unconvert     # Remove unnecessary type conversions
+
+  disable:
+    - gomnd         # Magic numbers (too strict for MVP)
+    - exhaustive    # Exhaustiveness check (not needed for MVP)
+    - nlreturn      # Newline rules (too opinionated)
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  exclude-rules:
+    # Exclude test files from certain linters
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+        - bodyclose

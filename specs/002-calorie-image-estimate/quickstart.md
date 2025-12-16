@@ -322,7 +322,7 @@ Per constitution Principle V and spec.md SC-007/SC-008, before marking feature c
 
 ```bash
 curl -H "x-goog-api-key: $GEMINI_API_KEY" \
-  https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash
+  https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash
 # Should return model info, not 403 error
 ```
 

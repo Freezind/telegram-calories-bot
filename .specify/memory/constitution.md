@@ -1,14 +1,17 @@
 <!--
 Sync Impact Report:
-- Version change: [none] → 1.0.0
-- Modified principles: N/A (initial creation)
-- Added sections: All sections (initial constitution)
+- Version change: 1.0.0 → 1.0.1
+- Modified principles: N/A (Technical Standards clarified, not core principles)
+- Added sections: N/A
 - Removed sections: N/A
+- Modified sections:
+  - "Error Handling & Logging" (lines 107-119) - Strengthened requirements for mandatory console error logging
 - Templates requiring updates:
-  ✅ plan-template.md - Constitution Check section aligned
-  ✅ spec-template.md - Requirements structure aligned
-  ✅ tasks-template.md - Test-first workflow aligned
+  ✅ plan-template.md - No changes needed (Constitution Check section is generic)
+  ✅ spec-template.md - No changes needed (requirements structure unchanged)
+  ✅ tasks-template.md - No changes needed (test-first workflow unchanged)
 - Follow-up TODOs: None
+- Rationale: PATCH bump - clarifies existing error handling standard to mandate console logging for debugging, aligning with current implementation practices
 -->
 
 # Telegram Calories Bot Constitution
@@ -109,13 +112,22 @@ telegram-calories-bot/
 **Error handling MUST**:
 - Return errors explicitly (no panic in production code except initialization)
 - Wrap errors with context using `fmt.Errorf("%w", err)` or errors package
-- Log errors with structured logging (e.g., zerolog, zap)
+- Log ALL errors to console/stdout for debugging visibility
+- Never silently ignore errors (every error path must log or return)
 
-**Logging MUST include**:
+**Error logging MUST**:
+- Use `log.Printf()` or structured logging (e.g., zerolog, zap)
+- Include descriptive context: operation type, affected resource, error value
+- Log immediately when error occurs (before returning or handling)
+- Format: `log.Printf("Failed to <operation>: %v", err)`
+
+**General logging MUST include**:
 - User ID (for debugging user-specific issues)
 - Operation type (e.g., "calorie_calculation", "data_query")
-- Timestamp and severity level
+- Timestamp and severity level (if using structured logging)
 - Never log sensitive data (images should be logged as metadata only)
+
+**Rationale**: Console error logging is essential for debugging production issues, troubleshooting bot behavior, and diagnosing integration failures. All errors must be visible without requiring specialized log aggregation tools.
 
 ### Image Processing & Calorie Calculation
 
@@ -201,4 +213,4 @@ For each user story:
 
 **Constitution supersedes all other practices**. If conflicts arise, constitution principles take precedence.
 
-**Version**: 1.0.0 | **Ratified**: 2025-12-15 | **Last Amended**: 2025-12-15
+**Version**: 1.0.1 | **Ratified**: 2025-12-15 | **Last Amended**: 2025-12-16

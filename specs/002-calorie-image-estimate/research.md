@@ -73,7 +73,7 @@ func analyzeFood(ctx context.Context, imageBytes []byte) (*genai.GenerateContent
     }}
 
     // Generate content using Gemini 2.0 Flash (optimized for speed)
-    response, err := client.Models.GenerateContent(ctx, "gemini-2.0-flash", content, nil)
+    response, err := client.Models.GenerateContent(ctx, "gemini-2.5-flash", content, nil)
     if err != nil {
         return nil, fmt.Errorf("failed to generate content: %w", err)
     }
@@ -86,7 +86,7 @@ func analyzeFood(ctx context.Context, imageBytes []byte) (*genai.GenerateContent
 
 - **`genai.NewPartFromBytes()`**: Inline image data with MIME type
 - **Multimodal Parts**: Combines text prompt + image in single request
-- **Model Selection**: `gemini-2.0-flash` balances speed (<8s requirement) with accuracy
+- **Model Selection**: `gemini-2.5-flash` balances speed (<8s requirement) with accuracy
 - **Error Handling**: Typed errors for rate limits, invalid arguments, permission issues
 
 ### API Configuration
@@ -375,7 +375,7 @@ func (g *GeminiService) EstimateCalories(ctx context.Context, imageBytes []byte,
         Temperature: floatPtr(0.2), // Range: 0.0 (deterministic) to 2.0 (creative)
     }
 
-    response, err := g.client.Models.GenerateContent(ctx, "gemini-2.0-flash", content, config)
+    response, err := g.client.Models.GenerateContent(ctx, "gemini-2.5-flash", content, config)
     if err != nil {
         return nil, fmt.Errorf("gemini API error: %w", err)
     }
@@ -414,7 +414,7 @@ Note: Estimates are approximate. Standard portion size assumed.
 ### Configuration Parameters
 
 - **Temperature**: `0.2` (low for consistency, per Gemini prompting guide)
-- **Model**: `gemini-2.0-flash` (optimized for speed, <8s target)
+- **Model**: `gemini-2.5-flash` (optimized for speed, <8s target)
 - **Max Tokens**: Default (sufficient for JSON output ~100 tokens)
 
 ---

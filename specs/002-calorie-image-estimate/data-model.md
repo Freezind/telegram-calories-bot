@@ -316,7 +316,7 @@ All error cases must provide clear messages (FR-013):
 
 **Success Criteria Alignment**:
 - **SC-003**: Bot responds to `/estimate` in <1s → Minimal session creation overhead
-- **SC-004**: Image analysis + response in <8s → Gemini API call must be fast (use `gemini-2.0-flash` from research.md)
+- **SC-004**: Image analysis + response in <8s → Gemini API call must be fast (use `gemini-2.5-flash` from research.md)
 - **SC-001**: Full flow in <10s → Total latency budget: 1s (command) + 8s (analysis) + 1s (buffer)
 
 **Memory Management**:

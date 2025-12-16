@@ -6,7 +6,7 @@
 
 api_version: v1
 service: Google Generative AI (Gemini)
-model: gemini-2.0-flash  # Fast, cost-effective multimodal model
+model: gemini-2.5-flash  # Fast, cost-effective multimodal model
 base_url: https://generativelanguage.googleapis.com
 
 authentication:
@@ -18,7 +18,7 @@ authentication:
 ---
 # Request Contract
 
-endpoint: POST /v1/models/gemini-2.0-flash:generateContent
+endpoint: POST /v1/models/gemini-2.5-flash:generateContent
 
 headers:
   Content-Type: application/json
@@ -193,7 +193,7 @@ example_usage: |
       }
       defer client.Close()
 
-      model := client.GenerativeModel("gemini-2.0-flash")
+      model := client.GenerativeModel("gemini-2.5-flash")
       model.SetTemperature(0.2)
       model.GenerationConfig.ResponseMIMEType = "application/json"
 
@@ -240,14 +240,14 @@ error_handling:
 # Performance Targets (from spec.md Success Criteria)
 
 - SC-004: Image analysis + response delivery < 8 seconds
-- gemini-2.0-flash average latency: 2-4 seconds (per research.md)
+- gemini-2.5-flash average latency: 2-4 seconds (per research.md)
 - Total latency budget: Image download (1s) + Gemini API (4s) + Response formatting (0.5s) = 5.5s
 - Buffer: 2.5 seconds for network variance
 
 ---
 # Cost Estimation (Google AI Studio Free Tier)
 
-model: gemini-2.0-flash
+model: gemini-2.5-flash
 pricing:
   - Input: $0.075 per 1M tokens
   - Output: $0.30 per 1M tokens
