@@ -1,17 +1,22 @@
 <!--
 Sync Impact Report:
-- Version change: 1.0.0 → 1.0.1
-- Modified principles: N/A (Technical Standards clarified, not core principles)
-- Added sections: N/A
+- Version change: 1.0.1 → 1.1.0
+- Modified principles:
+  - Principle V "Deliverable-Driven Development" → Expanded with strict prompt archiving requirements
+- Added sections:
+  - "Prompt Archiving Standards" subsection under Principle V
+  - Explicit verbatim preservation requirement
+  - Security constraint (no secrets in prompts)
 - Removed sections: N/A
 - Modified sections:
-  - "Error Handling & Logging" (lines 107-119) - Strengthened requirements for mandatory console error logging
+  - Lines 72-80: Principle V expanded with detailed archiving requirements
+  - Lines 163-175: Code Review Gates updated to enforce prompt archiving compliance
 - Templates requiring updates:
   ✅ plan-template.md - No changes needed (Constitution Check section is generic)
-  ✅ spec-template.md - No changes needed (requirements structure unchanged)
-  ✅ tasks-template.md - No changes needed (test-first workflow unchanged)
+  ✅ spec-template.md - No changes needed (deliverables already listed)
+  ✅ tasks-template.md - Deliverable tasks already reference prompt archiving
 - Follow-up TODOs: None
-- Rationale: PATCH bump - clarifies existing error handling standard to mandate console logging for debugging, aligning with current implementation practices
+- Rationale: MINOR bump - materially expands Principle V with new mandatory prompt preservation rules, making prompts first-class deliverables with strict verbatim storage requirements
 -->
 
 # Telegram Calories Bot Constitution
@@ -78,6 +83,34 @@ Sync Impact Report:
 5. **Test Reports**: Automated test results with pass/fail status
 
 **Rationale**: Requirements list five specific deliverables. Development is incomplete until all deliverables are ready for handoff.
+
+#### Prompt Archiving Standards
+
+**All prompts used for vibe coding MUST be archived verbatim**:
+
+**Storage Requirements**:
+- Prompts MUST be copied exactly as used, without modification
+- Store in `prompts/<feature-name>/vibe-coding/*.md` files
+- One prompt per file, numbered sequentially (001-, 002-, etc.)
+- File naming: `<sequence>-<brief-description>.md`
+
+**Verbatim Preservation Rules**:
+- Prompts MUST NOT be paraphrased, summarized, rewritten, or edited
+- Original wording, structure, formatting, and ordering MUST be preserved
+- Chat history alone is NOT considered a valid prompt record
+- Include full context provided to AI (system prompts, examples, constraints)
+
+**Security Constraints**:
+- Prompts MUST NOT contain secrets, API keys, tokens, or personal data
+- Sanitize any accidentally included sensitive data before archiving
+- Use placeholder text (e.g., `<REDACTED>`, `<API_KEY>`) if prompt referenced secrets
+
+**Compliance**:
+- Prompts are first-class deliverables for this project
+- Failure to provide complete and verbatim prompt archive is a constitution violation
+- Code review MUST verify prompt archive completeness and accuracy
+
+**Rationale**: Prompts are essential for understanding AI-assisted development decisions, reproducing implementations, and improving future prompt engineering. Verbatim preservation ensures fidelity and prevents knowledge loss through summarization.
 
 ## Technical Standards
 
@@ -161,7 +194,7 @@ For each user story:
 2. **Green**: Implement minimum code to make test pass
 3. **Refactor**: Clean up code while keeping tests green
 4. **Review**: Run gofmt, golangci-lint, and manual code review
-5. **Document**: Update prompts/ with AI prompts used
+5. **Document**: Archive all prompts verbatim in prompts/ directory
 6. **Report**: Generate test report with results
 
 ### Code Review Gates
@@ -171,7 +204,9 @@ For each user story:
 - ✅ Linter passing with zero warnings
 - ✅ Code coverage ≥70% for services and handlers
 - ✅ Manual review by human or detailed AI review with approval
-- ✅ Prompts archived in prompts/ directory
+- ✅ Prompts archived verbatim in prompts/ directory (exact copies, no edits)
+- ✅ Prompt files sanitized (no secrets, API keys, or personal data)
+- ✅ Prompt archive completeness verified (all AI interactions documented)
 
 ### Testing Requirements
 
@@ -213,4 +248,4 @@ For each user story:
 
 **Constitution supersedes all other practices**. If conflicts arise, constitution principles take precedence.
 
-**Version**: 1.0.1 | **Ratified**: 2025-12-15 | **Last Amended**: 2025-12-16
+**Version**: 1.1.0 | **Ratified**: 2025-12-15 | **Last Amended**: 2025-12-16
