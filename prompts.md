@@ -520,3 +520,74 @@ Plan MUST cover exactly these scenarios:
     "rationale": "human-readable explanation"
   }
 ```
+
+```
+/speckit.tasks
+
+Generate implementation tasks for Spec 004: LLM-Based End-to-End Bot Testing.
+
+Scope constraints (MUST follow):
+- Demo-grade only, simplicity first
+- Local execution only (no CI, no cloud infra automation)
+- Sequential execution, no parallelism
+- Go implementation only
+- Reuse existing Telegram bot + Mini App backend
+- No screenshot capture
+- Assertions MUST be based on key text presence, not visual rendering
+- Preserve original error messages verbatim (never overwrite or genericize)
+- All LLM judge prompts must be archived verbatim in prompts.md
+
+Functional scope:
+1. Bot LUI testing (Telegram Bot API)
+   - /start command validation
+   - /estimate + image upload validation
+   - Re-estimate button: must send new message and preserve previous estimate
+   - Cancel button: must send cancellation message and preserve previous estimate
+
+2. Mini App testing
+   - HTTP GET to deployed Mini App URL
+   - Assert HTTP 200
+   - Assert presence of key UI texts (e.g. "Calorie Log", "Add New Log", "No logs yet")
+   - No browser automation, no screenshots, no CRUD simulation
+
+3. LLM Judge
+   - Use Gemini
+   - Deterministic evaluation (temperature 0)
+   - Output structured JSON: {"verdict": "PASS|FAIL", "rationale": "..."}
+   - Judge evaluates structure & presence of expected elements only (not calorie accuracy)
+
+4. Test Report
+   - Single self-contained markdown report
+   - Include scenario description, execution steps, captured evidence (text/JSON), verdict, rationale
+   - Evidence embedded inline (JSON / plain text only)
+   - No external artifact directories
+
+Execution requirements:
+- Single command to run all tests (e.g. `go run cmd/tester/main.go`)
+- Continue executing remaining scenarios even if one fails
+- Exit code 0 if all PASS, 1 if any FAIL
+
+Task output format:
+- Group tasks by phase:
+  Phase 1: Test infrastructure
+  Phase 2: Bot LUI scenarios
+  Phase 3: Mini App scenario
+  Phase 4: Integration & report generation
+  Phase 5: Documentation
+- Each task should be concrete, file-oriented, and independently checkable
+- Avoid over-decomposition; keep task count minimal and practical
+
+Do NOT include:
+- CI/CD tasks
+- Screenshot or Playwright tasks
+- Performance testing
+- Multi-user testing
+- Database or persistence work
+- Deployment tasks
+
+Output ONLY the tasks list in markdown checkbox format.
+```
+
+```
+commit all changes with a readable and polish commit message
+```

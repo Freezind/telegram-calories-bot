@@ -72,7 +72,7 @@ func analyzeFood(ctx context.Context, imageBytes []byte) (*genai.GenerateContent
         Role:  genai.RoleUser,
     }}
 
-    // Generate content using Gemini 2.0 Flash (optimized for speed)
+    // Generate content using Gemini 2.5 Flash (optimized for speed)
     response, err := client.Models.GenerateContent(ctx, "gemini-2.5-flash", content, nil)
     if err != nil {
         return nil, fmt.Errorf("failed to generate content: %w", err)

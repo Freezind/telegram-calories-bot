@@ -82,7 +82,7 @@ Example (grilled chicken with vegetables):
 		Role:  genai.RoleUser,
 	}}
 
-	// Generate content using Gemini 2.0 Flash (optimized for speed)
+	// Generate content using Gemini 2.5 Flash (optimized for speed)
 	response, err := client.Models.GenerateContent(ctxWithTimeout, gc.model, content, &genai.GenerateContentConfig{
 		Temperature: floatPtr(0.2), // Low temperature for deterministic output
 	})

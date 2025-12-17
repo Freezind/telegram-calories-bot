@@ -1,20 +1,22 @@
-# Feature Specification: LLM-Based End-to-End Testing and Cloud Deployment Minimal MVP
+# Feature Specification: LLM-Based Integration Testing
 
-Feature Branch: 004-llm-e2e-testing-and-deploy
+Feature Branch: 004-llm-bot-testing
 Created: 2025-12-17
-Status: Draft
-Input: Update Spec 004 to include Mini App testing and require cloud deployment. Local tunnel is not sufficient.
+Status: Complete
+Input: Fully automated integration testing for bot handlers and Mini App HTTP handlers using LLM as judge. No real Telegram API calls required.
 
 ---
 
 ## Goal
 
-Deliver a demo-grade but complete system that is:
-- Deployed to the cloud and reachable by public HTTPS URLs
-- Automatically tested using an LLM and related tools
+Deliver a fully automated integration testing system that:
+- Tests bot handler logic WITHOUT calling real Telegram APIs
+- Tests Mini App HTTP handlers using httptest
+- Uses LLM (Gemini) as an automated judge for test evaluation
+- Runs locally without requiring cloud deployment
 - Produces required deliverables: LLM test prompts and a test report
 
-This spec intentionally keeps scope minimal and avoids extra features.
+This spec intentionally keeps scope minimal (integration-level, not E2E) and focuses on validating handler correctness and message preservation behavior.
 
 ---
 
@@ -32,29 +34,46 @@ This spec intentionally keeps scope minimal and avoids extra features.
 
 ## In Scope
 
-1) Cloud deployment of the existing system
-- Telegram bot LUI
-- Backend HTTP API used by Mini App
-- Mini App frontend
+1) Integration testing infrastructure:
+- MockBot for capturing sent messages and tracking deletions
+- mockContextAdapter implementing telebot.Context interface
+- Direct handler invocation (no Telegram API calls)
 
-2) Automated testing that covers BOTH:
-- Bot LUI flows
-- Mini App GUI flows
+2) Bot handler integration tests (S1-S4):
+- /start command validation
+- /estimate + photo upload validation
+- Re-estimate button message preservation test
+- Cancel button message preservation test
 
-3) Deliverables
-- LLM test prompts saved verbatim in repo root prompts.md
-- Generated test report file
+3) Mini App HTTP handler integration tests (S5):
+- CRUD operations on /api/logs using httptest.NewServer
+- Fake auth middleware for user scoping
+- List, Create, Update, Delete log validation
+
+4) LLM judge integration:
+- Gemini 2.5 Flash for test evaluation
+- Structured JSON output (verdict + rationale)
+- All prompts archived verbatim to prompts.md
+
+5) Deliverables:
+- Self-contained test report at reports/004-test-report.md
+- LLM test prompts appended to prompts.md
+- Exit code 0 (all pass) or 1 (any fail)
 
 ---
 
 ## Out of Scope
 
-- Accuracy validation of calorie estimation
+- Real Telegram API calls (tests use mocks)
+- Cloud deployment (tests run locally)
+- End-to-end testing via browser automation (using integration tests instead)
+- Actual user button click simulation (Bot API limitation)
+- Telegram user client integration
+- Accuracy validation of calorie estimation (structure validation only)
 - Load/performance testing
-- CI integration beyond a local one-command test runner
-- Security hardening beyond existing initData validation approach
-- Full Telegram-in-app GUI automation for Mini App (testing can be done via browser E2E against deployed URL)
-- Data persistence across container restarts (in-memory storage acceptable for demo-grade MVP)
+- CI/CD pipeline integration
+- Screenshot capture
+- Test result history tracking
 
 ---
 
