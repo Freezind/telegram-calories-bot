@@ -141,7 +141,10 @@ func main() {
 	})))
 
 	// Configure CORS
-	allowedOrigins := []string{"http://localhost:5173"}
+	allowedOrigins := []string{
+		"http://localhost:5173",
+		"https://telegram-calories-bot.pages.dev",
+	}
 	if tunnelURL := os.Getenv("TUNNEL_URL"); tunnelURL != "" {
 		allowedOrigins = append(allowedOrigins, tunnelURL)
 		log.Printf("[HTTP] CORS: Added tunnel URL: %s", tunnelURL)
@@ -149,6 +152,10 @@ func main() {
 	if frontendURL := os.Getenv("FRONTEND_URL"); frontendURL != "" {
 		allowedOrigins = append(allowedOrigins, frontendURL)
 		log.Printf("[HTTP] CORS: Added frontend URL: %s", frontendURL)
+	}
+	if miniappURL := os.Getenv("MINIAPP_URL"); miniappURL != "" {
+		allowedOrigins = append(allowedOrigins, miniappURL)
+		log.Printf("[HTTP] CORS: Added miniapp URL: %s", miniappURL)
 	}
 
 	corsHandler := cors.New(cors.Options{

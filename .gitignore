@@ -46,4 +46,4 @@ web/dist/
 # Development logs
 logs/
 *.log
-unified
+/unified
