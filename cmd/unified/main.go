@@ -149,10 +149,6 @@ func main() {
 		allowedOrigins = append(allowedOrigins, tunnelURL)
 		log.Printf("[HTTP] CORS: Added tunnel URL: %s", tunnelURL)
 	}
-	if frontendURL := os.Getenv("FRONTEND_URL"); frontendURL != "" {
-		allowedOrigins = append(allowedOrigins, frontendURL)
-		log.Printf("[HTTP] CORS: Added frontend URL: %s", frontendURL)
-	}
 	if miniappURL := os.Getenv("MINIAPP_URL"); miniappURL != "" {
 		allowedOrigins = append(allowedOrigins, miniappURL)
 		log.Printf("[HTTP] CORS: Added miniapp URL: %s", miniappURL)

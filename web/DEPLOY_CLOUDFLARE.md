@@ -73,7 +73,7 @@ https://telegram-calories-miniapp.pages.dev
 2. 点击 **Variables** 标签
 3. 添加新变量：
    ```
-   FRONTEND_URL=https://telegram-calories-miniapp.pages.dev
+   MINIAPP_URL=https://telegram-calories-miniapp.pages.dev
    ```
 4. 点击 **Save**
 5. 重新部署
@@ -102,7 +102,7 @@ https://telegram-calories-miniapp.pages.dev
 
 ### CORS 错误
 如果看到 CORS 错误，确认：
-- Railway 环境变量 `FRONTEND_URL` 设置正确
+- Railway 环境变量 `MINIAPP_URL` 设置正确
 - URL 完全匹配（包括 `https://` 和域名）
 - 已重新部署 Railway
 
