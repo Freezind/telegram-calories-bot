@@ -177,3 +177,247 @@ Constraints:
 ```
 /speckit.implement implement task Phase 7
 ```
+
+```
+/speckit.specify Build Spec 003: Telegram Mini App MVP (local, in-memory, React) with a storage abstraction that is designed to migrate to Cloudflare D1 in Spec 004.
+
+Goal:
+Create a minimal Telegram Mini App (Web App) that lets a user view and manage a list of calorie estimate records via a simple GUI, runnable locally for demo purposes. Data is stored in-memory only for Spec 003, but the architecture MUST include a storage abstraction so we can swap to Cloudflare D1 later without changing business logic or UI behavior.
+
+In scope:
+1) Mini App (React)
+- Single-page UI with a table/list of records.
+- Minimal CRUD:
+  - Create: add a new record (calories number + optional note)
+  - Update: edit calories and/or note
+  - Delete: remove a record
+- Clear empty-state when no records exist.
+- Basic readability only (no design requirements).
+
+2) Local backend API (in-memory implementation for this spec)
+- Provide a local HTTP API consumed by the React app:
+  - GET /api/logs
+  - POST /api/logs
+  - PATCH /api/logs/:id
+  - DELETE /api/logs/:id
+- Data MUST be stored in process memory only. No files, no SQLite, no external DB/services.
+- Restart resets all data.
+
+3) Storage abstraction (required for migration)
+- Introduce a clear storage interface (repository/data-access layer) that defines CRUD operations for logs.
+- The API handlers and business logic MUST depend only on this interface, not on the concrete in-memory store.
+- Provide one concrete implementation: InMemoryLogStore.
+- Include a stub/skeleton for a future D1-backed implementation (no Cloudflare code yet), and document the expected mapping (table name + fields) in a short design note.
+
+4) Telegram integration (minimal)
+- App must run in a normal browser for local dev, and also work inside Telegram as a Web App.
+- In Telegram context, read and display Telegram user info if available via Telegram WebApp initData.
+- Do NOT require server-side initData signature verification in this spec (defer to Spec 004).
+- If user id is available, scope records per user in-memory; otherwise use a single shared store for local dev.
+
+5) Deliverables
+- Local run instructions (frontend + backend).
+- Clean, readable code.
+- Prompts archive: all vibe coding prompts copied verbatim into prompts.md (no summaries), with no secrets.
+
+Non-goals (out of scope for Spec 003):
+- Any persistence (SQLite/D1/files/R2/etc.)
+- Any cloud hosting or deployment automation
+- Server-side Telegram initData verification/auth hardening
+- Integration with Gemini/LLM or image uploads
+- Complex UI/UX or multi-page app
+
+Success criteria:
+- Locally, a user can create/edit/delete records and see immediate updates.
+- API and UI behavior are deterministic.
+- Restarting the backend clears all data.
+- The data layer is abstracted so migrating to D1 in Spec 004 requires replacing only the store implementation, not rewriting handlers or UI.
+```
+
+```
+/speckit.clarify
+```
+
+```
+/speckit.plan
+```
+
+```
+/speckit.plan Update the plan to align with the latest spec and constitution:
+
+  - This is a demo MVP. REMOVE ALL performance and latency metrics (e.g. 200ms/500ms). Performance is explicitly out of scope.
+  - Remove prompt-archiving details from the plan. Prompt archiving is handled by the constitution only. If mentioned, it MUST refer solely to
+  ./prompts.md at repo root (no prompts/ directories).
+  - Explicitly state that the backend MUST NOT accept userID via query params or request body. User identity MUST be derived exclusively from
+  X-Telegram-Init-Data.
+  - Reduce documentation overhead: keep quickstart.md; make research.md and OpenAPI contracts optional and non-blocking.
+  - Focus the plan on functional correctness, simplicity, and demo viability only. Avoid over-engineering.
+```
+
+```
+/speckit.tasks
+```
+
+```
+/speckit.implement
+```
+
+```
+lease implement the helper script run-miniapp.sh
+```
+
+```
+I got Error: Failed to fetch logs:
+```
+
+```
+I used cloudflared tunnel
+```
+
+```
+the problem now is no logging from backend and frontend
+```
+
+```
+[cors] 2025/12/17 01:27:53   Actual request no headers added: missing origin
+  2025/12/17 01:27:53 [GET] /api/logs completed in 108.917µs
+  2025/12/17 01:27:53 [GET] /api/logs [::1]:52475
+  [cors] 2025/12/17 01:27:53 Handler: Actual request
+  [cors] 2025/12/17 01:27:53   Actual request no headers added: missing origin
+  2025/12/17 01:27:53 [GET] /api/logs completed in 347.708µs
+```
+
+```
+You are a senior full-stack engineer debugging a Telegram Mini App authentication issue.
+
+## Context
+- This is a Telegram Mini App (WebApp), not a normal browser app.
+- Frontend: React + Vite
+- Backend: Go (net/http)
+- Authentication MUST rely exclusively on Telegram WebApp initData.
+- Backend reads initData from HTTP header: `X-Telegram-Init-Data`
+- Backend currently returns: `401 Unauthorized: Invalid initData - user ID not found in initData`
+- New users SHOULD NOT receive 401; they should receive 200 with empty logs.
+
+## Critical Dev Rule
+During development, DO NOT overwrite or replace original error messages.
+- Preserve the original error message from the backend end-to-end.
+- Frontend should display/log the raw backend error string as-is.
+- Backend should return the real underlying error (with context), not a generic message.
+- Add context by prefixing or wrapping, but never discard the original content.
+
+## Observed Behavior
+- When opening the Mini App, the first API call (`GET /api/logs`) returns 401.
+- Error message: `Invalid initData - user ID not found in initData`
+- App is accessed via a Cloudflare Tunnel HTTPS URL.
+
+## Your Task
+Systematically debug the issue and identify the exact root cause with evidence.
+
+### Step 1 — Frontend Verification (Evidence Required)
+Confirm with concrete logs:
+1. Whether `window.Telegram?.WebApp` exists.
+2. Whether `window.Telegram.WebApp.initData` is non-empty (log length and a safe prefix only).
+3. Whether every API request includes:
+   - Header: `X-Telegram-Init-Data: Telegram.WebApp.initData`
+4. Whether API calls happen before SDK initialization.
+5. Ensure the frontend does NOT replace backend errors. If it does, fix it so the UI/logs show the exact backend error body.
+
+### Step 2 — Backend Verification (Evidence Required)
+Inspect backend code to verify:
+1. initData is read ONLY from `X-Telegram-Init-Data` header.
+2. initData is parsed as a URL-encoded query string.
+3. The `user` field is extracted correctly.
+4. The `user` field is JSON-decoded correctly.
+5. `user.id` is extracted as an integer.
+6. Error handling preserves raw underlying errors:
+   - Log: include operation + userID (if available) + error
+   - Response body: include the real error message (do not replace with generic text)
+7. Log initData safely:
+   - Log length and maybe first ~20 chars only
+   - Never log full initData
+
+### Step 3 — Telegram Environment Validation
+Verify and document:
+- The Mini App is opened via Telegram WebApp button (menu button / web_app button), not a normal link.
+- Repro status on:
+  - Telegram Desktop
+  - Telegram Mobile (iOS/Android)
+- Whether initData is empty in any environment and why.
+
+### Step 4 — Root Cause Conclusion
+Conclude precisely:
+- Why userID is missing
+- Whether the failure is due to:
+  - Frontend header not set / initData empty
+  - Wrong opening mode (not WebApp)
+  - Backend parsing bug (wrong key, wrong decoding)
+  - Tunnel/host/proxy affecting headers
+- Explain using the evidence collected (no speculation).
+
+### Step 5 — Minimal Fix
+Provide:
+1. Minimal code changes to fix the issue.
+2. A demo-friendly fallback:
+   - If initData is empty, frontend should not call the API and should show a "Please open from Telegram" message
+   - BUT still keep raw errors when the API is called and fails
+3. Logging improvements:
+   - Log received headers (presence/absence) and parsed userID
+   - Preserve and surface raw errors end-to-end
+
+## Constraints
+- Do NOT introduce new auth mechanisms.
+- Do NOT accept userID from query params or request body.
+- Keep fixes minimal (demo MVP).
+- Prefer correctness and debuggability over security hardening.
+- Preserve original error messages; do not “beautify” them by losing content.
+
+## Output Format
+Return:
+1. Root cause (1–2 sentences)
+2. Evidence (bullet list)
+3. Fix (exact code snippets)
+4. Optional improvements (clearly marked)
+```
+```
+Unify Spec 002 and Spec 003 backend into ONE Go process WITHOUT rewriting CRUD.
+
+Current situation:
+- Spec 003 CRUD backend + React miniapp is already implemented and working.
+- But Spec 002 bot backend is separate, so logs created by /estimate are not visible in miniapp.
+
+Goal:
+- Run ONE Go process that starts BOTH:
+  1) Telegram bot (spec 002)
+  2) HTTP API server for miniapp (spec 003)
+- Both must share the SAME LogStorage instance in memory.
+- /estimate MUST create log entries using the same storage.
+- Miniapp CRUD must operate on those logs.
+
+Constraints:
+- Keep existing CRUD code as much as possible.
+- Do NOT create a separate cmd/miniapp server process.
+- Do NOT accept userID from query/body. Miniapp auth stays X-Telegram-Init-Data; bot auth stays Telegram sender ID.
+- Preserve original error messages in development.
+
+Tasks:
+1) Refactor so main creates a single MemoryStorage instance and injects it into:
+   - Telegram handlers
+   - HTTP API handlers
+2) Start HTTP server alongside bot in the same entrypoint.
+3) Add storage.CreateLog(...) call in /estimate success path (map estimate result into Log model).
+4) Update quickstart/docs to run a single backend.
+5) Verify end-to-end: /estimate -> miniapp shows the log immediately.
+
+Output:
+- List the exact files changed.
+- Provide minimal diffs or code snippets for the injection and /estimate logging.
+```
+
+```
+also unify the run helper scripts pls
+```
+
+```
+please clean up the unused run helper scripts
+```

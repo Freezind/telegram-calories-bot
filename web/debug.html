@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Mini App Debug</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .info {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+        .success {
+            background: #e8f5e9;
+            border-left-color: #4CAF50;
+        }
+        h3 { margin-top: 0; }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Telegram Mini App Debug Info</h1>
+
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+
+        function addSection(title, content, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `info ${type}`;
+            div.innerHTML = `<h3>${title}</h3>${content}`;
+            output.appendChild(div);
+        }
+
+        // Check 1: Telegram WebApp SDK
+        if (window.Telegram && window.Telegram.WebApp) {
+            addSection('✅ Telegram WebApp SDK', 'SDK is loaded and available', 'success');
+        } else {
+            addSection('❌ Telegram WebApp SDK', 'SDK NOT FOUND! This page must be opened from Telegram.', 'error');
+        }
+
+        // Check 2: initData
+        if (window.Telegram?.WebApp) {
+            const initData = window.Telegram.WebApp.initData;
+            if (initData && initData.length > 0) {
+                addSection('✅ initData', `
+                    <p>initData is available!</p>
+                    <p><strong>Length:</strong> ${initData.length} characters</p>
+                    <p><strong>Preview:</strong></p>
+                    <pre>${initData.substring(0, 100)}${initData.length > 100 ? '...' : ''}</pre>
+                `, 'success');
+            } else {
+                addSection('❌ initData', `
+                    <p>initData is EMPTY!</p>
+                    <p>This usually means:</p>
+                    <ul>
+                        <li>You opened this from a browser, not Telegram</li>
+                        <li>The bot menu button is not configured correctly</li>
+                        <li>You're using Telegram Web (try Desktop/Mobile app)</li>
+                    </ul>
+                `, 'error');
+            }
+
+            // Parse user info if available
+            try {
+                const params = new URLSearchParams(initData);
+                const userStr = params.get('user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    addSection('✅ User Info', `
+                        <pre>${JSON.stringify(user, null, 2)}</pre>
+                    `, 'success');
+                }
+            } catch (e) {
+                // No user data
+            }
+        }
+
+        // Check 3: Platform
+        if (window.Telegram?.WebApp) {
+            addSection('📱 Platform Info', `
+                <p><strong>Platform:</strong> ${window.Telegram.WebApp.platform}</p>
+                <p><strong>Version:</strong> ${window.Telegram.WebApp.version}</p>
+                <p><strong>Color Scheme:</strong> ${window.Telegram.WebApp.colorScheme}</p>
+                <p><strong>Is Expanded:</strong> ${window.Telegram.WebApp.isExpanded}</p>
+            `);
+        }
+
+        // Check 4: Backend Connection
+        addSection('🔌 Testing Backend Connection...', '<p>Checking...</p>');
+
+        fetch('/api/logs', {
+            headers: {
+                'X-Telegram-Init-Data': window.Telegram?.WebApp?.initData || ''
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json().then(data => {
+                    addSection('✅ Backend Connection', `
+                        <p>Successfully connected to backend!</p>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Logs count:</strong> ${data.length}</p>
+                    `, 'success');
+                });
+            } else {
+                return response.text().then(text => {
+                    addSection('⚠️ Backend Response', `
+                        <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                        <p><strong>Error:</strong></p>
+                        <pre>${text}</pre>
+                        ${response.status === 401 ? '<p>This is expected if initData is empty.</p>' : ''}
+                    `, response.status === 401 ? 'info' : 'error');
+                });
+            }
+        })
+        .catch(error => {
+            addSection('❌ Backend Connection', `
+                <p>Failed to connect to backend!</p>
+                <p><strong>Error:</strong> ${error.message}</p>
+                <p>Make sure the backend server is running on http://localhost:8080</p>
+            `, 'error');
+        });
+
+        // Check 5: Current URL
+        addSection('🔗 Current URL', `
+            <pre>${window.location.href}</pre>
+            <p><strong>Protocol:</strong> ${window.location.protocol}</p>
+            <p><strong>Host:</strong> ${window.location.host}</p>
+        `);
+
+        // Initialize WebApp
+        if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
+        }
+    </script>
+</body>
+</html>
