@@ -1,8 +1,8 @@
+# Railway Configuration
+# Railway will automatically detect and use Dockerfile if present
+
 [build]
-builder = "nixpacks"
-buildCommand = "go build -o unified cmd/unified/main.go"
+builder = "DOCKERFILE"
 
 [deploy]
-startCommand = "./unified"
-restartPolicyType = "on-failure"
-restartPolicyMaxRetries = 3
+# Command defined in Dockerfile CMD
