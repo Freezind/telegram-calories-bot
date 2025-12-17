@@ -421,3 +421,102 @@ also unify the run helper scripts pls
 ```
 please clean up the unused run helper scripts
 ```
+
+```
+/speckit.specify Build Spec 004: LLM-based automated testing for the Telegram bot (LUI), following the same “small MVP” style as `002-calorie-image-estimate/spec.md`.
+
+Scope (keep it minimal):
+- Test ONLY the bot LUI (no Mini App tests).
+- Use Gemini (or any LLM tool) as a judge to validate the bot replies for a small set of critical scenarios.
+- Preserve original error messages end-to-end (do not overwrite with generic errors in dev or in the report).
+
+In Scope Scenarios (match the minimal style of Spec 002):
+1) /start shows the bot introduction message
+2) Upload one image for /estimate -> bot returns an estimate message (any reasonable result; not accuracy-focused)
+3) Click inline button re-estimate -> bot sends a NEW estimate message (must not delete/revoke the previous estimate)
+4) Click inline button cancel -> bot sends a NEW cancellation message (must not delete/revoke the previous estimate)
+
+Out of Scope:
+- Mini App GUI automated testing
+- Accuracy validation of calories
+- CI / deployment changes
+
+Deliverables (required):
+1) LLM test tool prompts (verbatim) saved in repo root `prompts.md` (constitution requirement).
+2) A generated test report file (markdown preferred) that includes, per scenario:
+   - steps executed
+   - captured bot outputs (message text + button callback data)
+   - PASS/FAIL
+   - LLM judge rationale
+   - timestamp
+3) One command to run tests locally (e.g., `make test-llm` or a Go test target).
+
+Requirements:
+- FR-001: The test runner MUST execute the 4 scenarios above.
+- FR-002: The runner MUST capture bot outputs and callback data as evidence.
+- FR-003: The runner MUST call an LLM judge with a strict rubric and return PASS/FAIL.
+- FR-004: The report MUST preserve original error messages (if any) without rewriting.
+
+Success Criteria:
+- SC-001: Running the single test command produces a report file with 4 scenarios and PASS/FAIL.
+- SC-002: Report includes evidence (captured bot messages + callback data) for each scenario.
+- SC-003: All LLM judge prompts used are copied verbatim into `prompts.md`.
+```
+
+```
+/speckit.clarify
+```
+
+```
+/speckit.plan
+
+Generate an implementation plan for **Spec 004: LLM-Based Bot Testing** with the following constraints and intentions:
+
+## Goal
+Build the **smallest possible, deployable, LLM-based automated test system** that validates the Telegram bot (LUI + Mini App) behavior and produces a human-readable test report.
+
+This is a **demo-grade testing system**, not a production QA framework.
+
+## Scope (STRICT)
+
+IN SCOPE:
+- Automated testing of Telegram bot **LUI flows**
+- Automated testing that **includes Mini App behavior** (page load + basic data visibility)
+- LLM-as-judge testing using **Gemini**
+- One-command execution (e.g. `make test-llm` or `go run cmd/tester`)
+- Markdown test report as final deliverable
+
+OUT OF SCOPE:
+- Performance testing
+- Load / stress testing
+- CI/CD integration
+- Mini App deep GUI interaction automation (no Playwright-level coverage)
+- Persistent storage correctness
+
+## Core Test Scenarios (keep minimal)
+
+Plan MUST cover exactly these scenarios:
+1. `/start` command returns welcome + usage text
+2. `/estimate` + image upload returns structured estimate message
+3. Clicking **Re-estimate** sends a NEW prompt and does NOT delete previous estimate
+4. Clicking **Cancel** sends a NEW cancellation message and does NOT delete previous estimate
+5. Mini App opens successfully from Telegram and loads without error (basic validation only)
+
+## Architecture Constraints
+
+- Language: **Go**
+- Reuse existing Telegram bot client logic where possible
+- Tests run **sequentially**, never in parallel
+- Storage remains **in-memory only**
+- Bot + Mini App already deployed (tests assume public HTTPS URLs exist)
+
+## LLM Judge Requirements
+
+- Use **Gemini**
+- Judge output MUST be **structured JSON**:
+  ```json
+  {
+    "verdict": "PASS | FAIL",
+    "rationale": "human-readable explanation"
+  }
+```
