@@ -6,6 +6,7 @@ toolchain go1.24.11
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/playwright-community/playwright-go v0.5200.1
 	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/genai v1.39.0
@@ -17,6 +18,9 @@ require (
 	cloud.google.com/go/auth v0.9.3 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/deckarep/golang-set/v2 v2.7.0 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
+	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect

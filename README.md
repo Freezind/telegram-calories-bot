@@ -105,6 +105,62 @@ The Mini App is designed to be accessed through Telegram only:
 
 - **Go**: Run tests with `go test ./...`
 - **Mini App**: Manual testing only (demo MVP scope)
+- **LLM-Based E2E Testing** (Feature 004): Automated testing using Gemini as LLM judge
+
+#### Running LLM-Based Integration Tests
+
+The LLM-based testing suite validates bot and Mini App behavior using fully automated integration tests with Gemini as an automated judge.
+
+**Key Features:**
+- **Fully automated** - no manual user interaction required
+- **No real Telegram API calls** - bot handlers invoked directly with mock Context
+- **Integration-level testing** - tests real handler logic with mocks/fakes
+- **Message preservation validation** - tracks message deletions via mock
+- **CRUD operation testing** - httptest for Mini App HTTP handlers
+
+**Prerequisites:**
+1. Test food image at `tests/fixtures/food.jpg` (see `tests/fixtures/README.md`)
+2. Environment variables configured in `.env.test`
+3. **NO** bot deployment or Telegram API access needed (tests run locally)
+
+**Setup:**
+```bash
+# Copy example config
+cp .env.test.example .env.test
+
+# Edit .env.test and fill in:
+# - MINIAPP_URL (can be any URL, only used for logging)
+# - GEMINI_API_KEY (Gemini API key for LLM judge)
+# - TEST_FOOD_IMAGE_PATH (optional, defaults to tests/fixtures/food.jpg)
+```
+
+**Run tests:**
+```bash
+./test-llm.sh
+```
+
+Or manually:
+```bash
+source .env.test
+go run cmd/tester/*.go
+```
+
+**Test output:**
+- **Test report**: `reports/004-test-report.md` (self-contained markdown with embedded evidence)
+- **LLM prompts**: Appended to `prompts.md` (all judge prompts verbatim)
+- **Exit code**: 0 if all scenarios PASS, 1 if any FAIL
+
+**Test scenarios:**
+1. S1: /start command returns welcome message (integration test)
+2. S2: /estimate + image upload returns structured estimate (integration test)
+3. S3: Re-estimate button does NOT delete previous message (preservation test)
+4. S4: Cancel button does NOT delete estimate message (preservation test)
+5. S5: Mini App CRUD operations work correctly (httptest integration)
+
+**Testing Approach:**
+- **S1-S4**: Direct handler invocation with MockBot capturing sent messages and tracking deletions
+- **S5**: httptest.NewServer with real HTTP handlers and fake auth middleware
+- **All scenarios**: LLM judge evaluates captured evidence for correctness
 
 ## Architecture
 

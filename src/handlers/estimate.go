@@ -10,6 +10,7 @@ import (
 	"time"
 
 	internalmodels "github.com/freezind/telegram-calories-bot/internal/models"
+	"github.com/freezind/telegram-calories-bot/src/bot"
 	"github.com/freezind/telegram-calories-bot/src/models"
 	"github.com/freezind/telegram-calories-bot/src/services"
 	telebot "gopkg.in/telebot.v3"
@@ -18,8 +19,9 @@ import (
 // EstimateHandler handles bot commands and interactions
 // Handles /start, /estimate, image uploads, and inline buttons
 type EstimateHandler struct {
+	sender         bot.Sender
 	sessionManager *services.SessionManager
-	geminiClient   *services.GeminiClient
+	estimator      services.Estimator
 	storage        LogStorage // Interface for log persistence (shared with miniapp)
 }
 
@@ -33,7 +35,7 @@ type LogStorage interface {
 // Sends welcome message with bot introduction and usage instructions
 func (h *EstimateHandler) HandleStart(c telebot.Context) error {
 	welcomeMsg := models.FormatWelcomeMessage()
-	_, err := c.Bot().Send(c.Sender(), welcomeMsg)
+	_, err := h.sender.Send(c.Sender(), welcomeMsg)
 	if err != nil {
 		log.Printf("[HANDLER ERROR] Failed to send welcome message: %v", err)
 		return fmt.Errorf("failed to send welcome message: %w", err)
@@ -44,10 +46,11 @@ func (h *EstimateHandler) HandleStart(c telebot.Context) error {
 }
 
 // NewEstimateHandler creates a new EstimateHandler instance
-func NewEstimateHandler(sm *services.SessionManager, gc *services.GeminiClient, storage LogStorage) *EstimateHandler {
+func NewEstimateHandler(sender bot.Sender, sm *services.SessionManager, estimator services.Estimator, storage LogStorage) *EstimateHandler {
 	return &EstimateHandler{
+		sender:         sender,
 		sessionManager: sm,
-		geminiClient:   gc,
+		estimator:      estimator,
 		storage:        storage,
 	}
 }
@@ -67,7 +70,7 @@ func (h *EstimateHandler) HandleEstimate(c telebot.Context) error {
 		markup.Row(btnCancel),
 	)
 
-	msg, err := c.Bot().Send(c.Sender(), "📸 Please send a food image for calorie estimation", markup)
+	msg, err := h.sender.Send(c.Sender(), "📸 Please send a food image for calorie estimation", markup)
 	if err != nil {
 		return fmt.Errorf("failed to send prompt: %w", err)
 	}
@@ -134,20 +137,20 @@ func (h *EstimateHandler) processImage(c telebot.Context, fileID, mimeType strin
 	h.sessionManager.UpdateSession(userID, models.StateProcessing)
 
 	// Send processing message
-	processingMsg, err := c.Bot().Send(c.Sender(), "⏳ Analyzing your image...")
+	processingMsg, err := h.sender.Send(c.Sender(), "⏳ Analyzing your image...")
 	if err != nil {
 		log.Printf("Failed to send processing message: %v", err)
 	}
 
 	// Download image from Telegram
-	file, err := c.Bot().FileByID(fileID)
+	file, err := h.sender.FileByID(fileID)
 	if err != nil {
 		h.sessionManager.UpdateSession(userID, models.StateIdle)
 		return h.sendError(c, "Failed to download image. Please try again.")
 	}
 
 	// Fetch file content
-	fileURL := c.Bot().URL + "/file/bot" + c.Bot().Token + "/" + file.FilePath
+	fileURL := h.sender.GetFileURL(file)
 	log.Printf("fileURL: %s", fileURL)
 	// #nosec G107 - URL is constructed from trusted Telegram Bot API response
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fileURL, nil)
@@ -174,13 +177,13 @@ func (h *EstimateHandler) processImage(c telebot.Context, fileID, mimeType strin
 	}
 
 	// Call Gemini Vision API (T028)
-	result, err := h.geminiClient.EstimateCalories(ctx, imageBytes, mimeType)
+	result, err := h.estimator.EstimateFromImage(ctx, imageBytes, mimeType)
 	if err != nil {
 		log.Printf("error when call gemini API: %v", err)
 		h.sessionManager.UpdateSession(userID, models.StateIdle)
 		// Delete processing message
 		if processingMsg != nil {
-			if delErr := c.Bot().Delete(processingMsg); delErr != nil {
+			if delErr := h.sender.Delete(processingMsg); delErr != nil {
 				log.Printf("Failed to delete processing message: %v", delErr)
 			}
 		}
@@ -192,7 +195,7 @@ func (h *EstimateHandler) processImage(c telebot.Context, fileID, mimeType strin
 		h.sessionManager.UpdateSession(userID, models.StateIdle)
 		// Delete processing message
 		if processingMsg != nil {
-			if delErr := c.Bot().Delete(processingMsg); delErr != nil {
+			if delErr := h.sender.Delete(processingMsg); delErr != nil {
 				log.Printf("Failed to delete processing message: %v", delErr)
 			}
 		}
@@ -201,7 +204,7 @@ func (h *EstimateHandler) processImage(c telebot.Context, fileID, mimeType strin
 
 	// Delete processing message
 	if processingMsg != nil {
-		if delErr := c.Bot().Delete(processingMsg); delErr != nil {
+		if delErr := h.sender.Delete(processingMsg); delErr != nil {
 			log.Printf("Failed to delete processing message: %v", delErr)
 		}
 	}
@@ -217,7 +220,7 @@ func (h *EstimateHandler) processImage(c telebot.Context, fileID, mimeType strin
 		markup.Row(btnReEstimate, btnCancel),
 	)
 
-	_, err = c.Bot().Send(c.Sender(), formattedResult, markup)
+	_, err = h.sender.Send(c.Sender(), formattedResult, markup)
 	if err != nil {
 		return fmt.Errorf("failed to send result: %w", err)
 	}
@@ -270,7 +273,7 @@ func (h *EstimateHandler) HandleReEstimate(c telebot.Context) error {
 		markup.Row(btnCancel),
 	)
 
-	msg, err := c.Bot().Send(c.Sender(), "📸 Please send another food image", markup)
+	msg, err := h.sender.Send(c.Sender(), "📸 Please send another food image", markup)
 	if err != nil {
 		log.Printf("[HANDLER ERROR] Failed to send re-estimate prompt for user %d: %v", userID, err)
 		return fmt.Errorf("failed to send re-estimate prompt: %w", err)
@@ -301,7 +304,7 @@ func (h *EstimateHandler) HandleCancel(c telebot.Context) error {
 	h.sessionManager.DeleteSession(userID)
 
 	// Send cancellation confirmation (FR-013)
-	_, err := c.Bot().Send(c.Sender(), "Estimation canceled. Use /estimate to start again.")
+	_, err := h.sender.Send(c.Sender(), "Estimation canceled. Use /estimate to start again.")
 	if err != nil {
 		log.Printf("[HANDLER ERROR] Failed to send cancellation message for user %d: %v", userID, err)
 		return fmt.Errorf("failed to send cancellation message: %w", err)
@@ -326,6 +329,6 @@ func isValidImageFormat(mimeType string) bool {
 // sendError sends an error message to the user
 // Helper for T031, T032, T033 error handling
 func (h *EstimateHandler) sendError(c telebot.Context, message string) error {
-	_, err := c.Bot().Send(c.Sender(), "❌ "+message)
+	_, err := h.sender.Send(c.Sender(), "❌ "+message)
 	return err
 }

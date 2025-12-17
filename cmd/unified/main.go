@@ -14,6 +14,7 @@ import (
 	apihandlers "github.com/freezind/telegram-calories-bot/internal/handlers"
 	"github.com/freezind/telegram-calories-bot/internal/middleware"
 	"github.com/freezind/telegram-calories-bot/internal/storage"
+	"github.com/freezind/telegram-calories-bot/src/bot"
 	bothandlers "github.com/freezind/telegram-calories-bot/src/handlers"
 	"github.com/freezind/telegram-calories-bot/src/services"
 )
@@ -58,10 +59,13 @@ func main() {
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
 	}
 
-	bot, err := tele.NewBot(pref)
+	tgBot, err := tele.NewBot(pref)
 	if err != nil {
 		log.Fatalf("❌ Failed to create bot: %v", err)
 	}
+
+	// Wrap bot as Sender
+	sender := bot.NewTelebotSender(tgBot)
 
 	// Initialize bot dependencies
 	sessionManager := services.NewSessionManager()
@@ -69,16 +73,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("❌ Failed to initialize Gemini client: %v", err)
 	}
-	estimateHandler := bothandlers.NewEstimateHandler(sessionManager, geminiClient, store)
+	estimator := services.NewGeminiEstimator(geminiClient)
+	estimateHandler := bothandlers.NewEstimateHandler(sender, sessionManager, estimator, store)
 
 	// Register bot command handlers
-	bot.Handle("/start", estimateHandler.HandleStart)
-	bot.Handle("/estimate", estimateHandler.HandleEstimate)
-	bot.Handle(tele.OnPhoto, estimateHandler.HandlePhoto)
-	bot.Handle(tele.OnDocument, estimateHandler.HandleDocument)
+	tgBot.Handle("/start", estimateHandler.HandleStart)
+	tgBot.Handle("/estimate", estimateHandler.HandleEstimate)
+	tgBot.Handle(tele.OnPhoto, estimateHandler.HandlePhoto)
+	tgBot.Handle(tele.OnDocument, estimateHandler.HandleDocument)
 
 	// Register callback handlers for inline buttons
-	bot.Handle(tele.OnCallback, func(c tele.Context) error {
+	tgBot.Handle(tele.OnCallback, func(c tele.Context) error {
 		callbackData := strings.TrimSpace(c.Callback().Data)
 		userID := c.Sender().ID
 
@@ -190,5 +195,5 @@ func main() {
 
 	// Start Telegram bot (blocking)
 	log.Println("[BOT] 🚀 Telegram bot started")
-	bot.Start()
+	tgBot.Start()
 }
