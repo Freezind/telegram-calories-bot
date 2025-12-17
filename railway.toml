@@ -1,0 +1,8 @@
+[build]
+builder = "nixpacks"
+buildCommand = "go build -o unified cmd/unified/main.go"
+
+[deploy]
+startCommand = "./unified"
+restartPolicyType = "on-failure"
+restartPolicyMaxRetries = 3
