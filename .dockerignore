@@ -1,0 +1,52 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# CI/CD
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.test.example
+
+# Build artifacts
+unified
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files and reports
+*_test.go
+reports/
+coverage.txt
+*.out
+
+# Node modules (if any)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Railway specific
+railway.toml
+Procfile
