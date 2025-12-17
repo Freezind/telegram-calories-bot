@@ -2,9 +2,11 @@ import { Log } from '../api/logs';
 
 interface LogTableProps {
   logs: Log[];
+  onEdit: (log: Log) => void;
+  onDelete: (log: Log) => void;
 }
 
-export function LogTable({ logs }: LogTableProps) {
+export function LogTable({ logs, onEdit, onDelete }: LogTableProps) {
   if (logs.length === 0) {
     return (
       <div className="empty-state">
@@ -42,8 +44,8 @@ export function LogTable({ logs }: LogTableProps) {
                 </span>
               </td>
               <td className="actions-cell">
-                <button className="btn-edit">Edit</button>
-                <button className="btn-delete">Delete</button>
+                <button className="btn-edit" onClick={() => onEdit(log)}>Edit</button>
+                <button className="btn-delete" onClick={() => onDelete(log)}>Delete</button>
               </td>
             </tr>
           ))}

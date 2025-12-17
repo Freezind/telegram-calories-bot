@@ -73,3 +73,106 @@ func (h *LogsHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// UpdateLog handles PATCH /api/logs/:id
+func (h *LogsHandler) UpdateLog(w http.ResponseWriter, r *http.Request) {
+	// Extract userID from context
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: user ID not found in context", http.StatusUnauthorized)
+		return
+	}
+
+	// Extract log ID from URL path
+	// Path format: /api/logs/{id}
+	path := r.URL.Path
+	logID := path[len("/api/logs/"):]
+	if logID == "" {
+		http.Error(w, "Log ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Parse request body
+	var update models.LogUpdate
+	if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Update log
+	if err := h.storage.UpdateLog(userID, logID, &update); err != nil {
+		if err.Error() == "log not found" {
+			http.Error(w, "Log not found", http.StatusNotFound)
+			return
+		}
+		if err.Error() == "unauthorized: log does not belong to user" {
+			http.Error(w, "Unauthorized: log does not belong to user", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, "Failed to update log: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Fetch updated log to return
+	logs, err := h.storage.ListLogs(userID)
+	if err != nil {
+		http.Error(w, "Failed to fetch updated log", http.StatusInternalServerError)
+		return
+	}
+
+	// Find the updated log
+	var updatedLog *models.Log
+	for _, log := range logs {
+		if log.ID == logID {
+			updatedLog = &log
+			break
+		}
+	}
+
+	if updatedLog == nil {
+		http.Error(w, "Updated log not found", http.StatusInternalServerError)
+		return
+	}
+
+	// Return updated log as JSON
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(updatedLog); err != nil {
+		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// DeleteLog handles DELETE /api/logs/:id
+func (h *LogsHandler) DeleteLog(w http.ResponseWriter, r *http.Request) {
+	// Extract userID from context
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: user ID not found in context", http.StatusUnauthorized)
+		return
+	}
+
+	// Extract log ID from URL path
+	path := r.URL.Path
+	logID := path[len("/api/logs/"):]
+	if logID == "" {
+		http.Error(w, "Log ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Delete log
+	if err := h.storage.DeleteLog(userID, logID); err != nil {
+		if err.Error() == "log not found" {
+			http.Error(w, "Log not found", http.StatusNotFound)
+			return
+		}
+		if err.Error() == "unauthorized: log does not belong to user" {
+			http.Error(w, "Unauthorized: log does not belong to user", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, "Failed to delete log: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return 204 No Content on success
+	w.WriteHeader(http.StatusNoContent)
+}

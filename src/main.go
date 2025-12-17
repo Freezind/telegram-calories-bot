@@ -54,7 +54,9 @@ func main() {
 	log.Println("Polling for updates...")
 
 	// Initialize handlers (T024-T033)
-	estimateHandler := handlers.NewEstimateHandler(sessionManager, geminiClient)
+	// NOTE: This standalone bot does NOT share storage with miniapp.
+	// Use cmd/unified/main.go for shared storage integration.
+	estimateHandler := handlers.NewEstimateHandler(sessionManager, geminiClient, nil)
 
 	// Register command handlers
 	bot.Handle("/start", estimateHandler.HandleStart)

@@ -1,14 +1,29 @@
 import { useState, useEffect } from 'react';
 import { LogTable } from './components/LogTable';
-import { fetchLogs, Log } from './api/logs';
+import { LogForm } from './components/LogForm';
+import { DeleteConfirm } from './components/DeleteConfirm';
+import { fetchLogs, deleteLog, Log } from './api/logs';
 import './App.css';
 
 function App() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+  const [editingLog, setEditingLog] = useState<Log | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deletingLog, setDeletingLog] = useState<Log | null>(null);
 
   useEffect(() => {
+    // Guard: Check if Telegram WebApp is available and initData exists
+    if (!window.Telegram?.WebApp?.initData) {
+      console.error('Telegram WebApp initData not found');
+      setError('Please open this app from Telegram');
+      setLoading(false);
+      return;
+    }
+
     loadLogs();
   }, []);
 
@@ -19,7 +34,12 @@ function App() {
       const data = await fetchLogs();
       setLogs(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load logs');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load logs';
+      if (errorMessage.includes('401') || errorMessage.toLowerCase().includes('unauthorized')) {
+        setError(errorMessage);
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -30,17 +50,88 @@ function App() {
   }
 
   if (error) {
-    return <div className="error">Error: {error}</div>;
+    return (
+      <div className="error">
+        <p>Error: {error}</p>
+        {error.includes('Telegram') && (
+          <p className="error-hint">
+            {error}
+          </p>
+        )}
+      </div>
+    );
   }
+
+  const handleAddLog = () => {
+    setFormMode('create');
+    setEditingLog(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditLog = (log: Log) => {
+    setFormMode('edit');
+    setEditingLog(log);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteLog = (log: Log) => {
+    setDeletingLog(log);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingLog) return;
+
+    try {
+      await deleteLog(deletingLog.id);
+      await loadLogs();
+      setIsDeleteConfirmOpen(false);
+      setDeletingLog(null);
+    } catch (err) {
+      console.error('Failed to delete log:', err);
+      // TODO: Show error message to user
+    }
+  };
 
   return (
     <div className="app">
       <header className="app-header">
         <h1>Calorie Log</h1>
+        <button
+          className="btn-add-log"
+          onClick={handleAddLog}
+        >
+          Add New Log
+        </button>
       </header>
       <main className="app-main">
-        <LogTable logs={logs} />
+        <LogTable
+          logs={logs}
+          onEdit={handleEditLog}
+          onDelete={handleDeleteLog}
+        />
       </main>
+
+      <LogForm
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingLog(null);
+        }}
+        onSuccess={loadLogs}
+        initialData={editingLog}
+        mode={formMode}
+      />
+
+      <DeleteConfirm
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => {
+          setIsDeleteConfirmOpen(false);
+          setDeletingLog(null);
+        }}
+        onConfirm={confirmDelete}
+        logInfo={deletingLog ? `${deletingLog.foodItems.join(', ')} - ${deletingLog.calories} cal` : undefined}
+      />
     </div>
   );
 }

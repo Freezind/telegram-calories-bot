@@ -7,7 +7,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
+	internalmodels "github.com/freezind/telegram-calories-bot/internal/models"
 	"github.com/freezind/telegram-calories-bot/src/models"
 	"github.com/freezind/telegram-calories-bot/src/services"
 	telebot "gopkg.in/telebot.v3"
@@ -18,6 +20,13 @@ import (
 type EstimateHandler struct {
 	sessionManager *services.SessionManager
 	geminiClient   *services.GeminiClient
+	storage        LogStorage // Interface for log persistence (shared with miniapp)
+}
+
+// LogStorage defines the interface for storing calorie logs
+// This matches internal/storage/interface.go
+type LogStorage interface {
+	CreateLog(userID int64, log *internalmodels.Log) error
 }
 
 // HandleStart handles the /start command (T086)
@@ -35,10 +44,11 @@ func (h *EstimateHandler) HandleStart(c telebot.Context) error {
 }
 
 // NewEstimateHandler creates a new EstimateHandler instance
-func NewEstimateHandler(sm *services.SessionManager, gc *services.GeminiClient) *EstimateHandler {
+func NewEstimateHandler(sm *services.SessionManager, gc *services.GeminiClient, storage LogStorage) *EstimateHandler {
 	return &EstimateHandler{
 		sessionManager: sm,
 		geminiClient:   gc,
+		storage:        storage,
 	}
 }
 
@@ -201,8 +211,8 @@ func (h *EstimateHandler) processImage(c telebot.Context, fileID, mimeType strin
 
 	// Create inline keyboard with Re-estimate and Cancel buttons (T029 - FR-008, FR-009)
 	markup := &telebot.ReplyMarkup{}
-	btnReEstimate := markup.Data("🔄 Re-estimate", "re_estimate")
-	btnCancel := markup.Data("❌ Cancel", "cancel")
+	btnReEstimate := markup.Data("Re-estimate", "re_estimate")
+	btnCancel := markup.Data("Cancel", "cancel")
 	markup.Inline(
 		markup.Row(btnReEstimate, btnCancel),
 	)
@@ -210,6 +220,23 @@ func (h *EstimateHandler) processImage(c telebot.Context, fileID, mimeType strin
 	_, err = c.Bot().Send(c.Sender(), formattedResult, markup)
 	if err != nil {
 		return fmt.Errorf("failed to send result: %w", err)
+	}
+
+	// Store the log entry in shared storage (visible in miniapp)
+	if h.storage != nil {
+		logEntry := &internalmodels.Log{
+			FoodItems:  result.FoodItems,
+			Calories:   result.Calories,
+			Confidence: internalmodels.ConfidenceLevel(result.Confidence),
+			Timestamp:  time.Now(),
+		}
+
+		if err := h.storage.CreateLog(userID, logEntry); err != nil {
+			// Log error but don't fail the user's request
+			log.Printf("[HANDLER ERROR] Failed to save log entry for user %d: %v", userID, err)
+		} else {
+			log.Printf("[HANDLER] ✓ Log entry saved for user %d: %d kcal, %d items", userID, result.Calories, len(result.FoodItems))
+		}
 	}
 
 	// Keep session in AwaitingImage state for potential Re-estimate

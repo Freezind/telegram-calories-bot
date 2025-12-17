@@ -43,19 +43,31 @@ function getInitData(): string {
 
 // Fetch all logs for the current user
 export async function fetchLogs(): Promise<Log[]> {
-  const response = await fetch('/api/logs', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Telegram-Init-Data': getInitData(),
-    },
-  });
+  try {
+    const response = await fetch('/api/logs', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': getInitData(),
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch logs: ${response.statusText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch logs (${response.status}): ${errorText || response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      // Check if it's a network error
+      if (error.message.includes('Failed to fetch') && !error.message.includes('(')) {
+        throw new Error('Failed to fetch logs: Cannot connect to backend server. Make sure the backend is running on http://localhost:8080');
+      }
+      throw error;
+    }
+    throw new Error('Failed to fetch logs: Unknown error');
   }
-
-  return response.json();
 }
 
 // Create a new log entry

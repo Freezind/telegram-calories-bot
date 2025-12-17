@@ -42,3 +42,8 @@ node_modules/
 dist/
 web/dist/
 *.local
+
+# Development logs
+logs/
+*.log
+unified

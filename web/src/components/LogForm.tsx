@@ -1,19 +1,35 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
-import { LogCreate, createLog } from '../api/logs';
+import { Log, LogCreate, createLog, updateLog } from '../api/logs';
 
 interface LogFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialData?: Log | null;
+  mode?: 'create' | 'edit';
 }
 
-export function LogForm({ isOpen, onClose, onSuccess }: LogFormProps) {
+export function LogForm({ isOpen, onClose, onSuccess, initialData = null, mode = 'create' }: LogFormProps) {
   const [foodItemsText, setFoodItemsText] = useState('');
   const [calories, setCalories] = useState('');
   const [confidence, setConfidence] = useState<'high' | 'medium' | 'low'>('medium');
   const [errors, setErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // Populate form with initialData when in edit mode
+  useEffect(() => {
+    if (isOpen && mode === 'edit' && initialData) {
+      setFoodItemsText(initialData.foodItems.join(', '));
+      setCalories(initialData.calories.toString());
+      setConfidence(initialData.confidence);
+    } else if (isOpen && mode === 'create') {
+      // Reset form for create mode
+      setFoodItemsText('');
+      setCalories('');
+      setConfidence('medium');
+    }
+  }, [isOpen, mode, initialData]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -54,14 +70,22 @@ export function LogForm({ isOpen, onClose, onSuccess }: LogFormProps) {
     // Submit log
     try {
       setSubmitting(true);
-      const logData: LogCreate = {
-        foodItems,
-        calories: caloriesNum,
-        confidence,
-        timestamp: new Date().toISOString(),
-      };
 
-      await createLog(logData);
+      if (mode === 'create') {
+        const logData: LogCreate = {
+          foodItems,
+          calories: caloriesNum,
+          confidence,
+          timestamp: new Date().toISOString(),
+        };
+        await createLog(logData);
+      } else if (mode === 'edit' && initialData) {
+        await updateLog(initialData.id, {
+          foodItems,
+          calories: caloriesNum,
+          confidence,
+        });
+      }
 
       // Reset form and close
       setFoodItemsText('');
@@ -70,7 +94,8 @@ export function LogForm({ isOpen, onClose, onSuccess }: LogFormProps) {
       onSuccess();
       onClose();
     } catch (err) {
-      setErrors([err instanceof Error ? err.message : 'Failed to create log']);
+      const action = mode === 'create' ? 'create' : 'update';
+      setErrors([err instanceof Error ? err.message : `Failed to ${action} log`]);
     } finally {
       setSubmitting(false);
     }
@@ -82,7 +107,9 @@ export function LogForm({ isOpen, onClose, onSuccess }: LogFormProps) {
 
       <div className="dialog-container">
         <Dialog.Panel className="dialog-panel">
-          <Dialog.Title className="dialog-title">Add New Log</Dialog.Title>
+          <Dialog.Title className="dialog-title">
+            {mode === 'create' ? 'Add New Log' : 'Edit Log'}
+          </Dialog.Title>
 
           <form onSubmit={handleSubmit} className="log-form">
             {errors.length > 0 && (
@@ -136,7 +163,10 @@ export function LogForm({ isOpen, onClose, onSuccess }: LogFormProps) {
                 Cancel
               </button>
               <button type="submit" className="btn-submit" disabled={submitting}>
-                {submitting ? 'Creating...' : 'Create Log'}
+                {submitting
+                  ? (mode === 'create' ? 'Creating...' : 'Saving...')
+                  : (mode === 'create' ? 'Create Log' : 'Save Changes')
+                }
               </button>
             </div>
           </form>

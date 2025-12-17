@@ -92,8 +92,8 @@ This document organizes implementation tasks by user story to enable independent
 
 ### Integration & Testing
 
-- [ ] T031 [US1] Test US1: Seed storage with 5 logs, verify table displays all rows sorted newest-first
-- [ ] T032 [US1] Test US1: Start with empty storage, verify "No logs yet" message appears
+- [x] T031 [US1] Test US1: Seed storage with 5 logs, verify table displays all rows sorted newest-first
+- [x] T032 [US1] Test US1: Start with empty storage, verify "No logs yet" message appears
 
 **Story 1 Complete**: ✅ Users can view their log history
 
@@ -107,22 +107,22 @@ This document organizes implementation tasks by user story to enable independent
 
 ### Backend API
 
-- [ ] T033 [US2] Implement POST /api/logs handler in internal/handlers/logs.go (parses JSON body, validates, generates ID/timestamps, calls storage.CreateLog())
-- [ ] T034 [US2] Register POST /api/logs route with AuthMiddleware in cmd/miniapp/main.go
+- [x] T033 [US2] Implement POST /api/logs handler in internal/handlers/logs.go (parses JSON body, validates, generates ID/timestamps, calls storage.CreateLog())
+- [x] T034 [US2] Register POST /api/logs route with AuthMiddleware in cmd/miniapp/main.go
 
 ### Frontend Components
 
-- [ ] T035 [P] [US2] Create LogForm component in web/src/components/LogForm.tsx using @headlessui/react Dialog (form fields: foodItems, calories, confidence, optional timestamp)
-- [ ] T036 [P] [US2] Implement form state management in LogForm with useState (controlled inputs)
-- [ ] T037 [P] [US2] Add client-side validation in LogForm (negative calories error, empty food items error, max 10 items/1000 chars)
-- [ ] T038 [P] [US2] Create API client function createLog() in web/src/api/logs.ts (POST request with X-Telegram-Init-Data header)
-- [ ] T039 [P] [US2] Add "Add New Log" button in App.tsx (opens LogForm modal)
-- [ ] T040 [P] [US2] Implement form submission in LogForm (calls createLog(), refreshes log list on success, closes modal)
+- [x] T035 [P] [US2] Create LogForm component in web/src/components/LogForm.tsx using @headlessui/react Dialog (form fields: foodItems, calories, confidence, optional timestamp)
+- [x] T036 [P] [US2] Implement form state management in LogForm with useState (controlled inputs)
+- [x] T037 [P] [US2] Add client-side validation in LogForm (negative calories error, empty food items error, max 10 items/1000 chars)
+- [x] T038 [P] [US2] Create API client function createLog() in web/src/api/logs.ts (POST request with X-Telegram-Init-Data header)
+- [x] T039 [P] [US2] Add "Add New Log" button in App.tsx (opens LogForm modal)
+- [x] T040 [P] [US2] Implement form submission in LogForm (calls createLog(), refreshes log list on success, closes modal)
 
 ### Integration & Testing
 
-- [ ] T041 [US2] Test US2: Submit valid log data, verify new entry appears at top of table without page refresh
-- [ ] T042 [US2] Test US2: Submit invalid data (negative calories), verify validation error appears in modal
+- [x] T041 [US2] Test US2: Submit valid log data, verify new entry appears at top of table without page refresh
+- [x] T042 [US2] Test US2: Submit invalid data (negative calories), verify validation error appears in modal
 
 **Story 2 Complete**: ✅ Users can create new log entries
 
@@ -136,17 +136,17 @@ This document organizes implementation tasks by user story to enable independent
 
 ### Backend Security
 
-- [ ] T043 [US5] Add userID scope enforcement in all storage methods (verify in MemoryStorage.UpdateLog and DeleteLog that log.UserID matches authenticated userID)
-- [ ] T044 [US5] Add logging for authentication events in AuthMiddleware (log userID extraction, log 401 errors with context)
+- [x] T043 [US5] Add userID scope enforcement in all storage methods (verify in MemoryStorage.UpdateLog and DeleteLog that log.UserID matches authenticated userID)
+- [x] T044 [US5] Add logging for authentication events in AuthMiddleware (log userID extraction, log 401 errors with context)
 
 ### Frontend
 
-- [ ] T045 [P] [US5] Ensure all API calls in web/src/api/logs.ts include X-Telegram-Init-Data header from WebApp.initData
-- [ ] T046 [P] [US5] Add error handling in App.tsx for 401 Unauthorized (display "Please open from Telegram" message)
+- [x] T045 [P] [US5] Ensure all API calls in web/src/api/logs.ts include X-Telegram-Init-Data header from WebApp.initData
+- [x] T046 [P] [US5] Add error handling in App.tsx for 401 Unauthorized (display "Please open from Telegram" message)
 
 ### Integration & Testing
 
-- [ ] T047 [US5] Test US5: Use two Telegram accounts (User A, User B), verify User A sees only their 3 logs and User B sees only their 5 logs
+- [x] T047 [US5] Test US5: Use two Telegram accounts (User A, User B), verify User A sees only their 3 logs and User B sees only their 5 logs
 
 **Story 5 Complete**: ✅ User data is isolated and private
 
@@ -160,19 +160,19 @@ This document organizes implementation tasks by user story to enable independent
 
 ### Backend API
 
-- [ ] T048 [US3] Implement PATCH /api/logs/:id handler in internal/handlers/logs.go (parses log ID from URL, parses LogUpdate from body, calls storage.UpdateLog())
-- [ ] T049 [US3] Register PATCH /api/logs/:id route with AuthMiddleware in cmd/miniapp/main.go
+- [x] T048 [US3] Implement PATCH /api/logs/:id handler in internal/handlers/logs.go (parses log ID from URL, parses LogUpdate from body, calls storage.UpdateLog())
+- [x] T049 [US3] Register PATCH /api/logs/:id route with AuthMiddleware in cmd/miniapp/main.go
 
 ### Frontend Components
 
-- [ ] T050 [P] [US3] Extend LogForm component to support edit mode (populate form with initialData prop, change modal title to "Edit Log")
-- [ ] T051 [P] [US3] Create API client function updateLog() in web/src/api/logs.ts (PATCH request with partial updates)
-- [ ] T052 [P] [US3] Add Edit button to each row in LogTable (opens LogForm modal in edit mode with log data)
-- [ ] T053 [P] [US3] Implement edit submission in LogForm (calls updateLog(), refreshes log list, closes modal)
+- [x] T050 [P] [US3] Extend LogForm component to support edit mode (populate form with initialData prop, change modal title to "Edit Log")
+- [x] T051 [P] [US3] Create API client function updateLog() in web/src/api/logs.ts (PATCH request with partial updates)
+- [x] T052 [P] [US3] Add Edit button to each row in LogTable (opens LogForm modal in edit mode with log data)
+- [x] T053 [P] [US3] Implement edit submission in LogForm (calls updateLog(), refreshes log list, closes modal)
 
 ### Integration & Testing
 
-- [ ] T054 [US3] Test US3: Edit a log's calories from 500 to 600, verify table shows updated value and modal closes
+- [x] T054 [US3] Test US3: Edit a log's calories from 500 to 600, verify table shows updated value and modal closes
 
 **Story 3 Complete**: ✅ Users can edit log entries
 
@@ -186,19 +186,19 @@ This document organizes implementation tasks by user story to enable independent
 
 ### Backend API
 
-- [ ] T055 [US4] Implement DELETE /api/logs/:id handler in internal/handlers/logs.go (parses log ID, calls storage.DeleteLog(), returns 204 No Content)
-- [ ] T056 [US4] Register DELETE /api/logs/:id route with AuthMiddleware in cmd/miniapp/main.go
+- [x] T055 [US4] Implement DELETE /api/logs/:id handler in internal/handlers/logs.go (parses log ID, calls storage.DeleteLog(), returns 204 No Content)
+- [x] T056 [US4] Register DELETE /api/logs/:id route with AuthMiddleware in cmd/miniapp/main.go
 
 ### Frontend Components
 
-- [ ] T057 [P] [US4] Create DeleteConfirm component in web/src/components/DeleteConfirm.tsx using @headlessui/react Dialog (confirmation message, Confirm/Cancel buttons)
-- [ ] T058 [P] [US4] Create API client function deleteLog() in web/src/api/logs.ts (DELETE request)
-- [ ] T059 [P] [US4] Add Delete button to each row in LogTable (opens DeleteConfirm dialog)
-- [ ] T060 [P] [US4] Implement delete confirmation in DeleteConfirm (calls deleteLog(), refreshes log list, closes dialog)
+- [x] T057 [P] [US4] Create DeleteConfirm component in web/src/components/DeleteConfirm.tsx using @headlessui/react Dialog (confirmation message, Confirm/Cancel buttons)
+- [x] T058 [P] [US4] Create API client function deleteLog() in web/src/api/logs.ts (DELETE request)
+- [x] T059 [P] [US4] Add Delete button to each row in LogTable (opens DeleteConfirm dialog)
+- [x] T060 [P] [US4] Implement delete confirmation in DeleteConfirm (calls deleteLog(), refreshes log list, closes dialog)
 
 ### Integration & Testing
 
-- [ ] T061 [US4] Test US4: Click Delete on a log, confirm, verify log is removed from table immediately
+- [x] T061 [US4] Test US4: Click Delete on a log, confirm, verify log is removed from table immediately
 
 **Story 4 Complete**: ✅ Users can delete log entries
 
@@ -208,7 +208,7 @@ This document organizes implementation tasks by user story to enable independent
 
 **Goal**: Final testing, documentation, and demo readiness.
 
-- [ ] T062 Perform end-to-end manual testing per quickstart.md checklist (all 5 user stories, all edge cases)
+- [x] T062 Perform end-to-end manual testing per quickstart.md checklist (all 5 user stories, all edge cases)
 
 ---
 
