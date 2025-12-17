@@ -36,6 +36,9 @@ export interface LogUpdate {
   timestamp?: string;
 }
 
+// Get API base URL from environment variable
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
 // Get initData from Telegram WebApp
 function getInitData(): string {
   return window.Telegram?.WebApp?.initData || '';
@@ -44,7 +47,7 @@ function getInitData(): string {
 // Fetch all logs for the current user
 export async function fetchLogs(): Promise<Log[]> {
   try {
-    const response = await fetch('/api/logs', {
+    const response = await fetch(`${API_BASE_URL}/api/logs`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +75,7 @@ export async function fetchLogs(): Promise<Log[]> {
 
 // Create a new log entry
 export async function createLog(log: LogCreate): Promise<Log> {
-  const response = await fetch('/api/logs', {
+  const response = await fetch(`${API_BASE_URL}/api/logs`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -90,7 +93,7 @@ export async function createLog(log: LogCreate): Promise<Log> {
 
 // Update an existing log entry
 export async function updateLog(id: string, update: LogUpdate): Promise<Log> {
-  const response = await fetch(`/api/logs/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/logs/${id}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -108,7 +111,7 @@ export async function updateLog(id: string, update: LogUpdate): Promise<Log> {
 
 // Delete a log entry
 export async function deleteLog(id: string): Promise<void> {
-  const response = await fetch(`/api/logs/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/logs/${id}`, {
     method: 'DELETE',
     headers: {
       'X-Telegram-Init-Data': getInitData(),

@@ -146,6 +146,10 @@ func main() {
 		allowedOrigins = append(allowedOrigins, tunnelURL)
 		log.Printf("[HTTP] CORS: Added tunnel URL: %s", tunnelURL)
 	}
+	if frontendURL := os.Getenv("FRONTEND_URL"); frontendURL != "" {
+		allowedOrigins = append(allowedOrigins, frontendURL)
+		log.Printf("[HTTP] CORS: Added frontend URL: %s", frontendURL)
+	}
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   allowedOrigins,
