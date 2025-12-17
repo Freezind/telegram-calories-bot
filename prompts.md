@@ -595,3 +595,52 @@ commit all changes with a readable and polish commit message
 ```
 write a script for railway to start unify backend the server, no interactive
 ```
+
+```
+You are debugging a Telegram Mini App + Go backend demo.
+
+Problem:
+UserID is derived from Telegram WebApp initData and is only available when the Mini App is opened inside Telegram. That means before the Mini App is opened, there may be no stored user context or logs for that user. Currently, first-time users may see errors or the backend returns 401 / empty userID / cannot find user in initData. This makes the Mini App appear broken on first open.
+
+Goal:
+Make the Mini App behave correctly for first-time users:
+- If there are no logs for this user yet, show a clean empty state (No logs yet) instead of failing.
+- Authentication should be based ONLY on X-Telegram-Init-Data header in production mode, BUT for local/dev it must be possible to test without Telegram (optional dev fallback).
+- Preserve original error messages: do NOT overwrite or genericize errors. Always include the raw error text in logs and in API error responses during development.
+
+Tasks:
+1) Trace the request flow when the Mini App loads:
+   - Frontend: how initData is read (Telegram WebApp SDK) and sent to backend.
+   - Backend: how initData is parsed and userID extracted.
+   Add logs on both sides (dev-only if needed) that show:
+   - Whether initData exists (length only, do NOT log full initData)
+   - Parsed userID
+   - API route, status code, and error
+
+2) Fix first-open behavior:
+   - Backend: ListLogs should return an empty list for a valid authenticated user with no existing logs, not an error.
+   - Storage: ensure per-user data structure is initialized lazily (on ListLogs/CreateLog) and never causes nil deref.
+   - Frontend: if API returns empty logs, render empty state.
+
+3) Improve error handling for missing/invalid initData:
+   - If initData is missing/invalid, return 401 with the ORIGINAL parsing error message included in response body (dev mode), and log the full stack/context server-side.
+   - Do not panic. No nil pointer dereference anywhere.
+
+4) Add a minimal dev/testing fallback (ONLY for local dev):
+   - If an env var like DEV_FAKE_USER_ID is set, allow requests without initData and use that userID.
+   - Clearly mark this path in logs: "[AUTH] DEV FALLBACK".
+   - Ensure this fallback is disabled by default.
+
+Deliverables:
+- A short summary of root cause(s)
+- The exact code changes (files + diff)
+- A step-by-step reproduction and verification guide:
+  - Case A: Open Mini App in Telegram -> should work
+  - Case B: Open from normal browser (no Telegram) with DEV_FAKE_USER_ID -> should work and show empty state
+
+Constraints:
+- Keep changes minimal.
+- Do not introduce new heavy dependencies.
+- Do not remove the existing "initData-only auth" requirement for real usage.
+- Do not rewrite error messages; preserve raw error strings.
+```

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"log"
 	"sort"
 	"sync"
 	"time"
@@ -30,7 +31,15 @@ func (s *MemoryStorage) ListLogs(userID int64) ([]models.Log, error) {
 
 	logs, exists := s.logs[userID]
 	if !exists {
+		// First-time user: no prior storage record exists
+		log.Printf("[STORAGE] User %d has no storage record yet (first access) - returning empty list", userID)
 		return []models.Log{}, nil
+	}
+
+	if len(logs) == 0 {
+		log.Printf("[STORAGE] User %d has 0 logs", userID)
+	} else {
+		log.Printf("[STORAGE] User %d has %d log(s)", userID, len(logs))
 	}
 
 	// Create a copy to avoid external mutations
@@ -46,8 +55,8 @@ func (s *MemoryStorage) ListLogs(userID int64) ([]models.Log, error) {
 }
 
 // CreateLog creates a new log entry
-func (s *MemoryStorage) CreateLog(userID int64, log *models.Log) error {
-	if err := log.Validate(); err != nil {
+func (s *MemoryStorage) CreateLog(userID int64, logEntry *models.Log) error {
+	if err := logEntry.Validate(); err != nil {
 		return err
 	}
 
@@ -55,18 +64,20 @@ func (s *MemoryStorage) CreateLog(userID int64, log *models.Log) error {
 	defer s.mu.Unlock()
 
 	// Generate UUID for the log
-	log.ID = uuid.New().String()
-	log.UserID = userID
+	logEntry.ID = uuid.New().String()
+	logEntry.UserID = userID
 	now := time.Now()
-	log.CreatedAt = now
-	log.UpdatedAt = now
+	logEntry.CreatedAt = now
+	logEntry.UpdatedAt = now
 
 	// Initialize user's log slice if it doesn't exist
 	if _, exists := s.logs[userID]; !exists {
+		log.Printf("[STORAGE] Initializing storage for user %d (first log creation)", userID)
 		s.logs[userID] = []models.Log{}
 	}
 
-	s.logs[userID] = append(s.logs[userID], *log)
+	s.logs[userID] = append(s.logs[userID], *logEntry)
+	log.Printf("[STORAGE] Created log for user %d (total logs: %d)", userID, len(s.logs[userID]))
 	return nil
 }
 
@@ -82,10 +93,10 @@ func (s *MemoryStorage) UpdateLog(userID int64, logID string, update *models.Log
 
 	// Find the log by ID
 	logIndex := -1
-	for i, log := range logs {
-		if log.ID == logID {
+	for i, logEntry := range logs {
+		if logEntry.ID == logID {
 			// Authorization check: verify log belongs to user
-			if log.UserID != userID {
+			if logEntry.UserID != userID {
 				return errors.New("unauthorized: log does not belong to user")
 			}
 			logIndex = i
@@ -98,23 +109,23 @@ func (s *MemoryStorage) UpdateLog(userID int64, logID string, update *models.Log
 	}
 
 	// Apply updates
-	log := &s.logs[userID][logIndex]
+	logEntry := &s.logs[userID][logIndex]
 	if update.FoodItems != nil {
-		log.FoodItems = *update.FoodItems
+		logEntry.FoodItems = *update.FoodItems
 	}
 	if update.Calories != nil {
-		log.Calories = *update.Calories
+		logEntry.Calories = *update.Calories
 	}
 	if update.Confidence != nil {
-		log.Confidence = *update.Confidence
+		logEntry.Confidence = *update.Confidence
 	}
 	if update.Timestamp != nil {
-		log.Timestamp = *update.Timestamp
+		logEntry.Timestamp = *update.Timestamp
 	}
-	log.UpdatedAt = time.Now()
+	logEntry.UpdatedAt = time.Now()
 
 	// Validate after updates
-	if err := log.Validate(); err != nil {
+	if err := logEntry.Validate(); err != nil {
 		return err
 	}
 
@@ -132,10 +143,10 @@ func (s *MemoryStorage) DeleteLog(userID int64, logID string) error {
 	}
 
 	// Find and remove the log
-	for i, log := range logs {
-		if log.ID == logID {
+	for i, logEntry := range logs {
+		if logEntry.ID == logID {
 			// Authorization check: verify log belongs to user
-			if log.UserID != userID {
+			if logEntry.UserID != userID {
 				return errors.New("unauthorized: log does not belong to user")
 			}
 			// Remove log by slicing

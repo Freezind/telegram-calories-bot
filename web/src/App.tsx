@@ -16,12 +16,13 @@ function App() {
   const [deletingLog, setDeletingLog] = useState<Log | null>(null);
 
   useEffect(() => {
-    // Guard: Check if Telegram WebApp is available and initData exists
-    if (!window.Telegram?.WebApp?.initData) {
-      console.error('Telegram WebApp initData not found');
-      setError('Please open this app from Telegram');
-      setLoading(false);
-      return;
+    // Note: We no longer block if initData is missing, to support dev mode with DEV_FAKE_USER_ID
+    // The backend will handle auth via DEV_FAKE_USER_ID or X-Telegram-Init-Data header
+    const hasInitData = !!window.Telegram?.WebApp?.initData;
+    console.log(`[Frontend] Telegram WebApp initData ${hasInitData ? 'present' : 'missing'} (length: ${window.Telegram?.WebApp?.initData?.length || 0})`);
+
+    if (!hasInitData) {
+      console.warn('[Frontend] No initData - assuming dev mode with DEV_FAKE_USER_ID on backend');
     }
 
     loadLogs();

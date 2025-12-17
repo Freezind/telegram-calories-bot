@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/freezind/telegram-calories-bot/internal/middleware"
@@ -35,8 +36,17 @@ func (h *LogsHandler) ListLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return logs as JSON
+	// Log the result for debugging
+	if len(logs) == 0 {
+		// This is the first-time user case - return empty array (not an error!)
+		log.Printf("[API] ListLogs: User %d has no logs yet (returning empty array)", userID)
+	} else {
+		log.Printf("[API] ListLogs: Found %d log(s) for user %d", len(logs), userID)
+	}
+
+	// Return logs as JSON (empty array for new users, which is correct behavior)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(logs); err != nil {
 		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
 		return
